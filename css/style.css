@@ -58,36 +58,4 @@ h1[tabindex="-1"]:focus{outline:none}
   scroll-snap-type:none;
   user-select:none;
 }
-.slider-controls{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:8px;
-  min-height:44px;
-  margin-top:8px;
-}
-.slider-count{
-  margin-right:auto;
-  color:var(--text2);
-  font-size:13px;
-  font-variant-numeric:tabular-nums;
-}
-.slider-button{
-  width:44px;
-  height:44px;
-  display:grid;
-  place-items:center;
-  border:1px solid var(--ink);
-  border-radius:50%;
-  background:var(--paper);
-}
-.slider-button:active:not(:disabled){
-  background:var(--ink);
-  color:var(--paper);
-}
-.slider-button:disabled{
-  border-color:var(--line2);
-  color:var(--line);
-  opacity:1;
-}
 @media(prefers-reduced-motion:reduce){.image-rail[data-slider-ready]{scroll-behavior:auto}}

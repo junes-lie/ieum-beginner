@@ -48,30 +48,15 @@
         card.setAttribute("aria-roledescription","slide");
         card.setAttribute("aria-label",`${index+1} / ${cards.length}`);
       });
-      const controls=document.createElement("div");
-      controls.className="slider-controls";
-      controls.innerHTML=`<output class="slider-count" aria-live="polite">1 / ${cards.length}</output><button class="slider-button" type="button" data-slider-prev aria-label="이전 곡">${U.icon("fa-chevron-left")}</button><button class="slider-button" type="button" data-slider-next aria-label="다음 곡">${U.icon("fa-chevron-right")}</button>`;
-      rail.insertAdjacentElement("afterend",controls);
-      const previous=controls.querySelector("[data-slider-prev]");
-      const next=controls.querySelector("[data-slider-next]");
-      const count=controls.querySelector(".slider-count");
       let active=0,frame=0,dragStart=null,dragged=false;
       const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const update=index=>{
-        active=Math.max(0,Math.min(index,cards.length-1));
-        count.value=`${active+1} / ${cards.length}`;
-        count.textContent=count.value;
-        previous.disabled=active===0;
-        next.disabled=active===cards.length-1;
-      };
+      const update=index=>{active=Math.max(0,Math.min(index,cards.length-1));};
       const nearest=()=>cards.reduce((best,card,index)=>Math.abs(card.offsetLeft-rail.offsetLeft-rail.scrollLeft)<best.distance?{index,distance:Math.abs(card.offsetLeft-rail.offsetLeft-rail.scrollLeft)}:best,{index:0,distance:Infinity}).index;
       const moveTo=index=>{
         const target=Math.max(0,Math.min(index,cards.length-1));
         rail.scrollTo({left:cards[target].offsetLeft-rail.offsetLeft,behavior:reduced?"auto":"smooth"});
         update(target);
       };
-      previous.addEventListener("click",()=>moveTo(active-1));
-      next.addEventListener("click",()=>moveTo(active+1));
       rail.addEventListener("scroll",()=>{
         cancelAnimationFrame(frame);
         frame=requestAnimationFrame(()=>update(nearest()));

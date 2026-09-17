@@ -73,18 +73,17 @@ const flows=[];
 }
 {
   await page.evaluate(()=>{location.hash="#/home";});
-  await page.waitForSelector(".slider-controls");
+  await page.waitForSelector(".image-rail[data-slider-ready]");
   const rail=page.locator(".image-rail");
-  const count=page.locator(".slider-count");
-  const before={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
-  await page.getByRole("button",{name:"다음 곡"}).click();
-  await page.waitForTimeout(420);
-  const afterNext={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
+  const before=await rail.evaluate(el=>el.scrollLeft);
   await rail.focus();
+  await rail.press("ArrowRight");
+  await page.waitForTimeout(420);
+  const afterNext=await rail.evaluate(el=>el.scrollLeft);
   await rail.press("End");
   await page.waitForTimeout(420);
-  const afterEnd={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
-  flows.push({name:"D 추천 곡 슬라이드",pass:before.count==="1 / 3"&&afterNext.count==="2 / 3"&&afterNext.left>before.left&&afterEnd.count==="3 / 3"&&afterEnd.left>=afterNext.left});
+  const afterEnd=await rail.evaluate(el=>el.scrollLeft);
+  flows.push({name:"D 추천 곡 슬라이드",pass:afterNext>before&&afterEnd>=afterNext});
 }
 await context.close();
 await browser.close();
