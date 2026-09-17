@@ -60,3 +60,115 @@ h1[tabindex="-1"]:focus{outline:none}
   user-select:none;
 }
 @media(prefers-reduced-motion:reduce){.image-rail[data-slider-ready]{scroll-behavior:auto}}
+
+/* Linen Tape — quiet paper UI with one functional cognac signal. */
+:root{
+  --bg:#f7f2e8;
+  --paper:#f7f2e8;
+  --muted:#efe9df;
+  --ink:#1d1a16;
+  --text2:#6e6760;
+  --line:rgba(29,26,22,.32);
+  --line2:rgba(29,26,22,.11);
+  --red:#a35828;
+  --red-dark:#7c411f;
+  --cyan:#a35828;
+  --cyan-dark:#7c411f;
+  --green:#1d1a16;
+  --shadow:0 1px 2px rgba(29,26,22,.04);
+  --radius:8px;
+}
+body{background:#d8d1c5;color:var(--ink);font-family:"Pretendard Variable","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif}
+.app-shell{background:var(--bg);box-shadow:0 0 0 1px rgba(29,26,22,.1)}
+.app-header,.detail-header{height:56px;background:rgba(247,242,232,.96);border-bottom:1px solid var(--line2)}
+.wordmark{font-family:Georgia,"Times New Roman",serif;font-size:23px;font-weight:400;letter-spacing:-.03em}
+.mark{border-radius:0;border-width:1px}.mark:before,.mark:after{border-color:var(--red)}
+h1,h2,h3{font-weight:600;letter-spacing:-.045em}.page-intro>p{line-height:1.7}.content{padding-top:30px}
+.section{margin-top:48px}.section-head{padding-bottom:12px;border-bottom:1px solid var(--line2);margin-bottom:16px}
+.paper{border-radius:4px;border:1px solid var(--line2);box-shadow:none;background:transparent}
+.button{border-radius:8px;min-height:48px;font-weight:600}.button.primary{background:var(--ink);color:var(--bg)}.button.primary:active{background:#302b25}.button.secondary{background:var(--muted);border:1px solid var(--line2)}.button.ghost{border:1px solid var(--line2)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.status-badge{border-radius:4px;background:transparent;border:1px solid var(--line2);color:var(--text2);font-weight:600}.status-badge.accent,.status-badge.red{background:transparent;color:var(--red-dark);border-color:rgba(163,88,40,.35)}.status-badge.success{background:transparent;color:var(--ink);border-color:var(--line)}
+.bottom-nav{bottom:0;width:min(430px,100%);min-height:78px;border-radius:0;background:rgba(247,242,232,.97);border-top:1px solid var(--line);box-shadow:none;padding:7px 10px}.nav-item{color:var(--text2);border-radius:4px}.nav-item.active{background:var(--ink);color:var(--bg)}.nav-item.active i{color:inherit}
+.sticky-bar{background:rgba(247,242,232,.97);border-top:1px solid var(--line2)}
+.range-feature{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);box-shadow:none}.range-copy{padding:24px 4px 22px}.range-feature img{filter:saturate(.72) contrast(.94)}
+.image-card,.arrangement-grid a{border-radius:6px}.image-card:after{background:linear-gradient(transparent,rgba(29,26,22,.88))}
+.song-row{grid-template-columns:84px minmax(0,1fr) 44px}.song-row>img{width:84px;height:96px;border-radius:2px;filter:saturate(.72)}
+.chip{border-radius:4px;background:transparent}.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.search{border-radius:4px;background:transparent}.cover-hero{background:var(--ink)}.cover-hero img{filter:saturate(.75)}
+.notice{border-left:2px solid var(--red);background:var(--muted)}
+.project-strip,.complete-strip{border-color:var(--line)}
+.open-card{border-radius:4px;background:transparent}.sample,.condition{background:transparent}.mix-card{border-radius:4px;background:transparent}.mix-card.selected{border-color:var(--ink);box-shadow:inset 3px 0 var(--red)}
+.cassette-shell{border-radius:8px;box-shadow:none}.cassette-stage{filter:saturate(.82)}
+
+/* Recording is the one immersive scene. */
+.record-screen .content{padding-top:22px}.record-intro h1{margin-top:10px;font-size:32px}.record-intro p{max-width:34ch}
+.record-deck{margin-top:28px}
+.recorder-cassette{position:relative}
+.cassette-skin{position:relative;isolation:isolate;aspect-ratio:1.5/1;overflow:hidden;border:1px solid rgba(247,242,232,.24);border-radius:10px;background:#382a22 var(--skin-image) center/cover no-repeat;box-shadow:0 18px 42px rgba(29,26,22,.22)}
+.cassette-skin:before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(94deg,rgba(247,242,232,.045) 0 1px,transparent 1px 4px);mix-blend-mode:screen}
+.skin-wash{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(29,26,22,.18),rgba(29,26,22,.84));backdrop-filter:saturate(.55)}
+.record-jcard{position:absolute;left:7%;right:7%;top:9%;min-height:76px;padding:10px 13px;background:rgba(247,242,232,.91);color:var(--ink);border:1px solid rgba(29,26,22,.45);display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:4px 10px;transform:rotate(-.35deg)}
+.record-jcard:after{content:"";position:absolute;left:12px;right:12px;bottom:10px;border-bottom:1px solid rgba(29,26,22,.22)}
+.record-jcard span{grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--text2)}
+.record-jcard strong{font-size:16px;align-self:end;position:relative;z-index:1}.record-jcard time{font-size:11px;align-self:end;position:relative;z-index:1;color:var(--text2)}
+.record-transport{position:absolute;left:11%;right:11%;top:48%;height:34%;display:grid;grid-template-columns:70px 1fr 70px;align-items:center;gap:9px;padding:6px 9px;border:1px solid rgba(247,242,232,.42);background:rgba(29,26,22,.72);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)}
+.record-reel{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:repeating-conic-gradient(from 0deg,var(--bg) 0 7deg,rgba(247,242,232,.18) 7deg 20deg);border:5px solid rgba(247,242,232,.72);box-shadow:inset 0 0 0 8px rgba(29,26,22,.75)}
+.record-reel i{width:12px;aspect-ratio:1;border-radius:50%;background:var(--ink);border:2px solid rgba(247,242,232,.7)}
+.record-tape{height:20px;overflow:hidden;border-block:1px solid rgba(247,242,232,.22);background:#120d0a}
+.record-tape i{display:block;width:180%;height:100%;background:repeating-linear-gradient(90deg,#17100c 0 9px,#53392a 9px 13px,#17100c 13px 24px);transform:translateX(-30%)}
+.record-cassette-label{position:absolute;left:9%;right:9%;bottom:4%;display:flex;justify-content:space-between;color:var(--bg);font:600 10px/1.2 ui-monospace,monospace;letter-spacing:.08em}
+.recorder-cassette.is-recording .record-reel.left{animation:record-reel-spin .68s linear infinite}
+.recorder-cassette.is-recording .record-tape i{animation:tape-travel .62s linear infinite}
+.recorder-cassette.is-recording .record-jcard{box-shadow:inset 3px 0 var(--red)}
+.recorder-cassette.is-recorded .record-jcard strong{font-size:22px;font-weight:400;color:var(--red-dark)}
+@keyframes record-reel-spin{to{transform:rotate(1turn)}}
+@keyframes tape-travel{to{transform:translateX(-12%)}}
+
+.singing-guide{margin-top:26px;border-block:1px solid var(--line);padding:18px 0 16px}
+.guide-meta{display:flex;align-items:center;justify-content:space-between;color:var(--text2);font-size:11px;font-weight:700;letter-spacing:.05em}.guide-meta .record-time{font:500 24px/1 Georgia,serif;color:var(--ink);letter-spacing:-.02em}
+.lyric-guide{padding:24px 0 20px;text-align:center}.lyric-guide p{color:var(--text2);font-size:14px}.lyric-guide h2{font-size:23px;margin:12px 0;line-height:1.35;letter-spacing:-.04em}.singing-guide.is-live .lyric-guide h2{color:var(--red-dark)}
+.pitch-guide{position:relative;height:142px;overflow:hidden;background:rgba(239,233,223,.72);border:1px solid var(--line2)}
+.pitch-lines{position:absolute;inset:12px 0}.pitch-lines i{display:block;height:20%;border-bottom:1px solid rgba(29,26,22,.09)}
+.pitch-note{position:absolute;left:var(--x);top:var(--y);width:var(--w);height:6px;background:var(--ink)}.pitch-note small{position:absolute;left:0;bottom:8px;font:500 10px/1 ui-monospace,monospace;color:var(--text2)}
+.pitch-playhead{position:absolute;top:0;bottom:0;left:2%;width:2px;background:var(--red);opacity:.35}.pitch-playhead:before{content:"";position:absolute;left:50%;top:9px;width:8px;height:8px;border-radius:50%;background:var(--red);transform:translateX(-50%)}
+.singing-guide.is-live .pitch-playhead{opacity:1;animation:pitch-playhead 8s linear forwards}
+@keyframes pitch-playhead{to{left:96%}}
+.input-strip{display:grid;grid-template-columns:36px 1fr 58px;gap:10px;align-items:center;margin-top:13px;font-size:12px;color:var(--text2)}.input-strip strong{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}.input-level{height:4px;background:rgba(29,26,22,.12);overflow:hidden}.input-level i{display:block;width:12%;height:100%;background:var(--red)}.singing-guide.is-live .input-level i{animation:input-level 1s ease-in-out infinite alternate}@keyframes input-level{to{width:78%}}
+.guide-action{margin-top:20px}.home-song-lead{padding-top:8px}.home-song-lead .section-head{padding-bottom:8px}.home-song-lead .section-head h1{font-size:clamp(30px,8.5vw,40px);line-height:1.08;letter-spacing:-.045em}
+
+@media(max-width:389px){.record-transport{grid-template-columns:60px 1fr 60px}.record-jcard strong{font-size:14px}.lyric-guide h2{font-size:21px}}
+@media(prefers-reduced-motion:reduce){.recorder-cassette.is-recording .record-reel.left,.recorder-cassette.is-recording .record-tape i,.singing-guide.is-live .pitch-playhead,.singing-guide.is-live .input-level i{animation:none}.singing-guide.is-live .pitch-playhead{left:48%}}
+
+/* Unified song cassette: the art belongs to the cassette; writing belongs to a separate J-card. */
+.song-cassette{position:relative;isolation:isolate;width:100%;aspect-ratio:1.54/1;overflow:hidden;border:1px solid rgba(29,26,22,.62);border-radius:10px;background:#8f8a82;box-shadow:0 16px 36px rgba(29,26,22,.18),inset 0 0 0 2px rgba(247,242,232,.18)}
+.cassette-skin-image{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:saturate(1.08) contrast(.98) brightness(1.08);transform:scale(1.01)}
+.song-cassette:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(150deg,rgba(247,242,232,.08),transparent 48%,rgba(29,26,22,.12));pointer-events:none}
+.song-cassette:after{content:"";position:absolute;z-index:2;left:13%;right:13%;bottom:8%;height:9%;background:rgba(29,26,22,.68);clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);border-top:1px solid rgba(247,242,232,.32)}
+.cassette-glaze{position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(96deg,rgba(247,242,232,.035) 0 1px,transparent 1px 5px);mix-blend-mode:screen;pointer-events:none}
+.song-cassette .record-transport{position:absolute;z-index:2;left:10%;right:10%;top:34%;height:42%;display:grid;grid-template-columns:1fr .86fr 1fr;align-items:center;gap:10px;padding:7px 12px;border:1px solid rgba(247,242,232,.55);background:rgba(29,26,22,.58);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)}
+.song-cassette .record-reel{width:100%;max-width:82px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:repeating-conic-gradient(from 0deg,rgba(247,242,232,.94) 0 7deg,rgba(247,242,232,.2) 7deg 19deg);border:5px solid rgba(247,242,232,.72);box-shadow:inset 0 0 0 8px rgba(29,26,22,.78)}
+.song-cassette .record-reel i{width:12px;aspect-ratio:1;border-radius:50%;background:var(--ink);border:2px solid rgba(247,242,232,.72)}
+.song-cassette .record-tape{position:relative;height:24px;overflow:hidden;border-block:1px solid rgba(247,242,232,.24);background:#120d0a}
+.song-cassette .record-tape i{display:block;width:180%;height:100%;background:repeating-linear-gradient(90deg,#17100c 0 9px,#53392a 9px 13px,#17100c 13px 24px);transform:translateX(-30%)}
+.song-cassette .record-tape b{position:absolute;left:0;bottom:0;width:var(--tape-progress);height:4px;background:var(--red);transition:width 900ms var(--ease)}
+.song-cassette .cassette-screws{position:absolute;z-index:3;inset:8px;display:grid;grid-template-columns:1fr 1fr;align-content:space-between;justify-items:space-between;pointer-events:none}.song-cassette .cassette-screws i{width:6px;height:6px;border-radius:50%;background:rgba(247,242,232,.72);box-shadow:0 0 0 1px rgba(29,26,22,.5)}.song-cassette .cassette-screws i:nth-child(even){justify-self:end}
+.song-cassette.is-compact .record-transport{gap:4px;padding:3px 6px}.song-cassette.is-compact .record-reel{border-width:2px;box-shadow:inset 0 0 0 4px rgba(29,26,22,.78)}.song-cassette.is-compact .record-reel i{width:5px;border-width:1px}.song-cassette.is-compact .record-tape{height:10px}.song-cassette.is-compact .cassette-screws{inset:5px}.song-cassette.is-compact .cassette-screws i{width:4px;height:4px}
+.song-cassette.motion-recording .record-reel.left,.song-cassette.motion-left .record-reel.left{animation:record-reel-spin .68s linear infinite}.song-cassette.motion-recording .record-tape i,.song-cassette.motion-left .record-tape i{animation:tape-travel .62s linear infinite}.song-cassette.motion-right .record-reel.right{animation:spin-reverse .68s linear infinite}
+
+.cassette-stage{padding-bottom:0;filter:none}.cassette-object{position:relative;padding-bottom:64px}.cassette-object .loose-tape{bottom:0;height:92px}.progress-100 .cassette-object{padding-bottom:8px}.progress-100 .loose-tape{display:none}
+.separate-jcard{position:relative;margin-top:24px;padding:16px 16px 12px;background:#fbf7ed;color:var(--ink);border:1px solid rgba(29,26,22,.3);border-radius:1px;box-shadow:5px 7px 0 rgba(29,26,22,.055);transform:rotate(-.3deg)}
+.separate-jcard:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 33px,rgba(29,26,22,.11) 33px 34px);pointer-events:none}.separate-jcard>*{position:relative}
+.jcard-heading{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;min-height:34px;padding-bottom:10px}.jcard-heading span{font-size:11px;font-weight:700;color:var(--red-dark)}.jcard-heading strong{font-size:16px}.jcard-heading small{font-size:11px;color:var(--text2)}
+.jcard-row{display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:38px}.jcard-row>span{font-size:10px;font-weight:700;color:var(--text2)}.jcard-row em{font-size:12px;color:var(--text2);font-style:normal}.jcard-row time{font-size:11px;color:var(--text2)}.jcard-row .hand-a{font-size:21px}.jcard-row .hand-b{font-size:16px}
+.separate-jcard.is-writing{box-shadow:5px 7px 0 rgba(163,88,40,.08);border-left:3px solid var(--red)}
+
+.recorder-cassette{position:relative}.recorder-cassette .record-jcard{position:static;inset:auto;min-height:0;padding:0;background:transparent;border:0;display:block;transform:none}.recorder-cassette .record-jcard:after{display:none}.recorder-cassette .record-jcard .separate-jcard{margin-top:22px}.recorder-cassette .record-jcard .jcard-heading span{grid-column:auto}.recorder-cassette .record-jcard .jcard-row>span{grid-column:auto}.recorder-cassette.is-recorded .record-jcard strong{font-size:21px;color:var(--red-dark)}
+
+.image-card.cassette-song-card{min-height:338px;padding:16px;display:flex;flex-direction:column;gap:15px;background:var(--muted);color:var(--ink);border:1px solid var(--line2);border-radius:4px}.image-card.cassette-song-card:after{display:none}.cassette-song-card .song-cassette{flex:0 0 auto}.cassette-song-card .image-card-copy{position:static;display:block;color:var(--ink)}.cassette-song-card .image-card-copy p{color:var(--text2)}.cassette-song-card .image-card-copy .status-badge{background:transparent;color:var(--red-dark)}
+.cassette-strip{grid-template-columns:152px minmax(0,1fr)}.cassette-strip>.song-cassette{width:152px;aspect-ratio:1.54/1}.cassette-strip>div{min-width:0}
+.song-cassette-hero{padding:8px 0 0}.song-cassette-hero>.song-cassette{width:min(100%,380px);margin-inline:auto}.song-cassette-copy{margin-top:20px;padding:0 0 18px;border-bottom:1px solid var(--ink)}.song-cassette-copy h1{font-size:clamp(31px,9vw,42px);line-height:1.05;letter-spacing:-.045em}.song-cassette-copy p{margin-top:8px;color:var(--text2);font-size:14px}
+.song-cassette:focus-visible,.cassette-song-card:focus-visible{outline:3px solid var(--red);outline-offset:4px}
+
+@media(max-width:389px){.song-cassette:not(.is-compact) .record-transport{gap:8px;padding-inline:8px}.cassette-strip{grid-template-columns:132px minmax(0,1fr)}.cassette-strip>.song-cassette{width:132px}.jcard-heading{grid-template-columns:auto 1fr}.jcard-heading small{grid-column:2}.jcard-row{grid-template-columns:60px minmax(0,1fr)}.jcard-row time{grid-column:2}}
+@media(prefers-reduced-motion:reduce){.song-cassette.motion-recording .record-reel.left,.song-cassette.motion-left .record-reel.left,.song-cassette.motion-right .record-reel.right,.song-cassette.motion-recording .record-tape i,.song-cassette.motion-left .record-tape i{animation:none}}
