@@ -35,5 +35,84 @@
   function action(name){if(name==="back"){history.length>1?history.back():go("home");return;}if(name==="notice")return showToast("새 알림이 없어요.");if(name==="saved")return showToast("저장 기능은 곡 상세 다음 버전에서 연결됩니다.");if(name==="sort")return showToast("현재 결과를 음역 중첩이 높은 순으로 보여드려요.");if(name==="start-measure"){S.set({measurement:"active",measurementStep:0});go("range-test");return;}if(name==="next-measure"){if(state().measurementStep<2){S.set({measurementStep:state().measurementStep+1});render();}else{S.set({measurement:"complete",measurementStep:2,voiceProfile:{min:"A2",max:"E5",stable:"C3–C5"}});showToast("안정적으로 유지된 구간을 찾았어요.");setTimeout(()=>go("voice-report"),450);}return;}if(name==="detect-fail")return showToast("마이크를 한 뼘 가까이 두고 데모 입력으로 다시 감지했어요.");if(name==="open-from-song"){S.set({openPartIndex:0});go("open-parts");return;}if(name==="next-open"){S.set({openPartIndex:(state().openPartIndex+1)%D.openParts.length});render();announce("다음 열린 파트를 보여드려요.");return;}if(name==="to-conditions"){go(`join/${currentPart().id}`);return;}if(name==="join"){S.set({joined:true,projectProgress:0});showToast("프로젝트에 참여했어요. 첫 트랙을 녹음할 수 있어요.");setTimeout(()=>go("project"),500);return;}if(name==="partner-arrival"){S.set({projectProgress:100,reelAnimation:"right"});render();announce("다음 파트가 도착해 오른쪽 릴이 움직이고 테이프가 모두 감겼어요.");setTimeout(()=>{S.set({reelAnimation:""},{persist:false});},1900);return;}if(name==="record"){if(state().recordingState==="recording"){clearInterval(recordTimer);S.set({recordingState:"preview"});render();}else{elapsed=0;S.set({recordingState:"recording"});render();recordTimer=setInterval(()=>{elapsed++;const el=document.getElementById("record-time");if(el)el.textContent=`0:${String(elapsed).padStart(2,"0")}`;if(elapsed>=8){clearInterval(recordTimer);S.set({recordingState:"preview"});render();}},1000);}return;}if(name==="demo-record"){S.set({recordingState:"preview"});render();return;}if(name==="reset-record"){S.set({recordingState:"idle"});render();return;}if(name==="submit-record"){S.set({recordingState:"submitted",projectProgress:50,reelAnimation:"left"});go("project");setTimeout(()=>showToast("알토 응답을 제출했고 왼쪽 릴에 기록했어요."),120);setTimeout(()=>S.set({reelAnimation:""},{persist:false}),1900);return;}if(name==="complete-mix"){if(state().mixingMode==="expert")return showToast("요청 메모와 견적을 확인하는 데모 단계예요. 결제는 진행하지 않습니다.");S.set({mixStatus:"complete"});render();announce("AI 믹스 데모가 준비됐어요.");return;}if(name==="to-home"){go("home");return;}if(name==="restart"){openModal();return;}if(name==="project-menu"){showToast("프로젝트 나가기와 신고는 확인 모달 뒤 처리되는 안전 메뉴예요.");return;}}
   function swipe(e,card){if(!gesture)return;const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;gesture=null;if(dx>64&&Math.abs(dx)>Math.abs(dy)){card.style.transform="translateX(30px)";setTimeout(()=>action("next-open"),140);}else if(dy>64&&Math.abs(dy)>Math.abs(dx)){go(`compatibility/${currentPart().id}`);}}
   function openModal(){overlay.innerHTML=`<div class="scrim" data-close-modal><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">데모 상태를 처음으로 돌릴까요?</h2><p>저장된 음역 결과와 프로젝트 진행 상태가 모두 초기화됩니다.</p><div class="modal-actions"><button class="button primary" data-confirm-reset>처음부터 다시 체험하기</button><button class="button secondary" data-cancel-modal>현재 상태 유지하기</button></div></div></div>`;const first=overlay.querySelector("[data-confirm-reset]");first.focus();overlay.querySelector("[data-confirm-reset]").addEventListener("click",()=>{S.reset();overlay.innerHTML="";go("home");});overlay.querySelector("[data-cancel-modal]").addEventListener("click",()=>{overlay.innerHTML="";});overlay.querySelector(".scrim").addEventListener("click",e=>{if(e.target===e.currentTarget)overlay.innerHTML="";});}
+  function bindSliders(){
+    app.querySelectorAll(".image-rail:not([data-slider-ready])").forEach((rail,railIndex)=>{
+      const cards=[...rail.querySelectorAll(".image-card")];
+      if(cards.length<2)return;
+      rail.dataset.sliderReady="true";
+      rail.tabIndex=0;
+      rail.setAttribute("role","region");
+      rail.setAttribute("aria-roledescription","carousel");
+      rail.setAttribute("aria-label",railIndex===0?"추천 곡 슬라이드":"콘텐츠 슬라이드");
+      cards.forEach((card,index)=>{
+        card.setAttribute("aria-roledescription","slide");
+        card.setAttribute("aria-label",`${index+1} / ${cards.length}`);
+      });
+      const controls=document.createElement("div");
+      controls.className="slider-controls";
+      controls.innerHTML=`<output class="slider-count" aria-live="polite">1 / ${cards.length}</output><button class="slider-button" type="button" data-slider-prev aria-label="이전 곡">${U.icon("fa-chevron-left")}</button><button class="slider-button" type="button" data-slider-next aria-label="다음 곡">${U.icon("fa-chevron-right")}</button>`;
+      rail.insertAdjacentElement("afterend",controls);
+      const previous=controls.querySelector("[data-slider-prev]");
+      const next=controls.querySelector("[data-slider-next]");
+      const count=controls.querySelector(".slider-count");
+      let active=0,frame=0,dragStart=null,dragged=false;
+      const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const update=index=>{
+        active=Math.max(0,Math.min(index,cards.length-1));
+        count.value=`${active+1} / ${cards.length}`;
+        count.textContent=count.value;
+        previous.disabled=active===0;
+        next.disabled=active===cards.length-1;
+      };
+      const nearest=()=>cards.reduce((best,card,index)=>Math.abs(card.offsetLeft-rail.offsetLeft-rail.scrollLeft)<best.distance?{index,distance:Math.abs(card.offsetLeft-rail.offsetLeft-rail.scrollLeft)}:best,{index:0,distance:Infinity}).index;
+      const moveTo=index=>{
+        const target=Math.max(0,Math.min(index,cards.length-1));
+        rail.scrollTo({left:cards[target].offsetLeft-rail.offsetLeft,behavior:reduced?"auto":"smooth"});
+        update(target);
+      };
+      previous.addEventListener("click",()=>moveTo(active-1));
+      next.addEventListener("click",()=>moveTo(active+1));
+      rail.addEventListener("scroll",()=>{
+        cancelAnimationFrame(frame);
+        frame=requestAnimationFrame(()=>update(nearest()));
+      },{passive:true});
+      rail.addEventListener("keydown",event=>{
+        if(event.key==="ArrowLeft"){event.preventDefault();moveTo(active-1);}
+        if(event.key==="ArrowRight"){event.preventDefault();moveTo(active+1);}
+        if(event.key==="Home"){event.preventDefault();moveTo(0);}
+        if(event.key==="End"){event.preventDefault();moveTo(cards.length-1);}
+      });
+      rail.addEventListener("pointerdown",event=>{
+        if(event.pointerType!=="mouse")return;
+        dragStart={x:event.clientX,left:rail.scrollLeft};
+        dragged=false;
+        rail.classList.add("is-dragging");
+        rail.setPointerCapture(event.pointerId);
+      });
+      rail.addEventListener("pointermove",event=>{
+        if(!dragStart)return;
+        const distance=event.clientX-dragStart.x;
+        if(Math.abs(distance)>5)dragged=true;
+        rail.scrollLeft=dragStart.left-distance;
+      });
+      const finishDrag=()=>{
+        if(!dragStart)return;
+        dragStart=null;
+        rail.classList.remove("is-dragging");
+        moveTo(nearest());
+      };
+      rail.addEventListener("pointerup",finishDrag);
+      rail.addEventListener("pointercancel",finishDrag);
+      rail.addEventListener("click",event=>{
+        if(!dragged)return;
+        event.preventDefault();
+        event.stopPropagation();
+        dragged=false;
+      },true);
+      update(0);
+    });
+  }
+  const sliderObserver=new MutationObserver(()=>bindSliders());
+  sliderObserver.observe(app,{childList:true,subtree:true});
   window.addEventListener("hashchange",render);window.addEventListener("keydown",e=>{if(e.key==="Escape"&&overlay.innerHTML)overlay.innerHTML="";});if(!location.hash)location.hash="#/home";else render();
 })();

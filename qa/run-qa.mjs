@@ -71,6 +71,21 @@ const flows=[];
 {
   await page.evaluate(v=>{localStorage.setItem("ieum.rebuild.v1",JSON.stringify(v));location.hash="#/project";location.reload();},{...storage,projectProgress:0,recordingState:"idle"});await page.waitForSelector("#app h1");await page.getByRole("button",{name:"알토 응답 녹음하기"}).click();await page.getByRole("button",{name:"데모 녹음으로 미리보기"}).click();await page.getByRole("button",{name:"이 트랙 제출하기"}).first().click();await page.waitForURL(/project/);await page.getByRole("button",{name:"다음 파트 도착 상태 보기"}).click();await page.getByRole("button",{name:"믹싱 방식 고르기"}).click();await page.getByRole("button",{name:"AI 믹스 데모 만들기"}).click();flows.push({name:"C 녹음·카세트·믹싱",pass:(await page.locator("h1").innerText()).includes("한 파일")});
 }
+{
+  await page.evaluate(()=>{location.hash="#/home";});
+  await page.waitForSelector(".slider-controls");
+  const rail=page.locator(".image-rail");
+  const count=page.locator(".slider-count");
+  const before={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
+  await page.getByRole("button",{name:"다음 곡"}).click();
+  await page.waitForTimeout(420);
+  const afterNext={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
+  await rail.focus();
+  await rail.press("End");
+  await page.waitForTimeout(420);
+  const afterEnd={count:await count.innerText(),left:await rail.evaluate(el=>el.scrollLeft)};
+  flows.push({name:"D 추천 곡 슬라이드",pass:before.count==="1 / 3"&&afterNext.count==="2 / 3"&&afterNext.left>before.left&&afterEnd.count==="3 / 3"&&afterEnd.left>=afterNext.left});
+}
 await context.close();
 await browser.close();
 
