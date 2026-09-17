@@ -1,7 +1,7 @@
 (function(){
   const D=window.IEUM_DATA, S=window.IEUM_STATE, U=window.IEUM_UI;
   const app=document.getElementById("app"),live=document.getElementById("live-region"),overlay=document.getElementById("overlay-root");
-  let gesture=null,recordTimer=null,elapsed=0;
+  let gesture=null,recordTimer=null,elapsed=0,sliderController=null;
   const state=()=>S.get();
   const songById=id=>D.songs.find(x=>x.id===id)||D.songs[0];
   const currentPart=()=>D.openParts[state().openPartIndex]||D.openParts[0];
@@ -36,7 +36,12 @@
   function swipe(e,card){if(!gesture)return;const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;gesture=null;if(dx>64&&Math.abs(dx)>Math.abs(dy)){card.style.transform="translateX(30px)";setTimeout(()=>action("next-open"),140);}else if(dy>64&&Math.abs(dy)>Math.abs(dx)){go(`compatibility/${currentPart().id}`);}}
   function openModal(){overlay.innerHTML=`<div class="scrim" data-close-modal><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">데모 상태를 처음으로 돌릴까요?</h2><p>저장된 음역 결과와 프로젝트 진행 상태가 모두 초기화됩니다.</p><div class="modal-actions"><button class="button primary" data-confirm-reset>처음부터 다시 체험하기</button><button class="button secondary" data-cancel-modal>현재 상태 유지하기</button></div></div></div>`;const first=overlay.querySelector("[data-confirm-reset]");first.focus();overlay.querySelector("[data-confirm-reset]").addEventListener("click",()=>{S.reset();overlay.innerHTML="";go("home");});overlay.querySelector("[data-cancel-modal]").addEventListener("click",()=>{overlay.innerHTML="";});overlay.querySelector(".scrim").addEventListener("click",e=>{if(e.target===e.currentTarget)overlay.innerHTML="";});}
   function bindSliders(){
-    app.querySelectorAll(".image-rail:not([data-slider-ready])").forEach((rail,railIndex)=>{
+    const rails=[...app.querySelectorAll(".image-rail:not([data-slider-ready])")];
+    if(!rails.length)return;
+    if(sliderController)sliderController.abort();
+    sliderController=new AbortController();
+    const signal=sliderController.signal;
+    rails.forEach((rail,railIndex)=>{
       const cards=[...rail.querySelectorAll(".image-card")];
       if(cards.length<2)return;
       rail.dataset.sliderReady="true";
@@ -67,27 +72,29 @@
         if(event.key==="Home"){event.preventDefault();moveTo(0);}
         if(event.key==="End"){event.preventDefault();moveTo(cards.length-1);}
       });
-      rail.addEventListener("pointerdown",event=>{
-        if(event.pointerType!=="mouse")return;
+      rail.addEventListener("mousedown",event=>{
+        if(event.button!==0)return;
+        event.preventDefault();
         dragStart={x:event.clientX,left:rail.scrollLeft};
         dragged=false;
         rail.classList.add("is-dragging");
-        rail.setPointerCapture(event.pointerId);
       });
-      rail.addEventListener("pointermove",event=>{
+      window.addEventListener("mousemove",event=>{
         if(!dragStart)return;
+        event.preventDefault();
         const distance=event.clientX-dragStart.x;
         if(Math.abs(distance)>5)dragged=true;
         rail.scrollLeft=dragStart.left-distance;
-      });
+      },{signal});
       const finishDrag=()=>{
         if(!dragStart)return;
         dragStart=null;
         rail.classList.remove("is-dragging");
         moveTo(nearest());
       };
-      rail.addEventListener("pointerup",finishDrag);
-      rail.addEventListener("pointercancel",finishDrag);
+      window.addEventListener("mouseup",finishDrag,{signal});
+      window.addEventListener("blur",finishDrag,{signal});
+      rail.addEventListener("dragstart",event=>event.preventDefault());
       rail.addEventListener("click",event=>{
         if(!dragged)return;
         event.preventDefault();
