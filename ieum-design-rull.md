@@ -146,8 +146,8 @@ BottomNavigation과 StickyActionBar는 동시에 표시하지 않는다.
 ```css
 :root {
   --font-ui: "Pretendard Variable", "Pretendard", "Noto Sans KR", sans-serif;
-  --font-hand-a: "Binggrae Samanco", sans-serif;
-  --font-hand-b: "Cafe24 Supermagic", sans-serif;
+  --font-hand-a: "Nanum Pen Script", cursive;
+  --font-hand-b: "Single Day", cursive;
 }
 ```
 

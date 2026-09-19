@@ -1,6 +1,6 @@
 (function(){
-  const KEY="ieum.rebuild.v1";
-  const defaults={measurement:"none",measurementStep:0,voiceProfile:null,songFilter:"전체",selectedSong:0,selectedPart:"알토 응답",selectedKey:"-1키",openPartIndex:0,conditionsAccepted:false,joined:false,projectProgress:0,reelAnimation:"",recordingState:"idle",mixingMode:"ai",mixStatus:"idle",toast:"",modal:null};
+  const KEY="ieum.linen-tape.v1";
+  const defaults={measurement:"none",measurementStep:0,voiceProfile:null,songFilter:"전체",selectedSong:0,selectedPart:"낮은 파트",selectedKey:"-1키",openPartIndex:0,conditionsAccepted:false,joined:false,projectProgress:0,reelAnimation:"",recordingState:"idle",recordingMeta:null,userName:"민서",mixingMode:"auto",mixStatus:"idle",compatibilityScores:{},toast:"",modal:null};
   function load(){try{const raw=localStorage.getItem(KEY);return raw?{...defaults,...JSON.parse(raw)}:{...defaults};}catch(error){return {...defaults,toast:"저장된 상태를 읽지 못해 기본 화면을 열었어요."};}}
   let value=load();
   function save(){const persist={...value,toast:"",modal:null,reelAnimation:""};localStorage.setItem(KEY,JSON.stringify(persist));}
