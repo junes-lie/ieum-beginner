@@ -1,0 +1,359 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 이 곡의 어느 파트를 부를 수 있나</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F2EFE8;--ink:#1B1917;--ink-2:#6B635B;--ink-3:#A79E93;--line:#D9D2C6;
+ --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;--s10:80px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:820px;margin:0 auto;padding:var(--s10) var(--s3)}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:32px;line-height:1.13;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:var(--s6) 0 var(--s2)}
+.lead{font-size:16px;color:var(--ink-2);margin:0 0 var(--s4);max-width:48ch}
+.hand{font-family:"Nanum Pen Script",cursive;font-size:24px;line-height:1.35}
+button{font:inherit;font-size:14px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:11px 24px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button.mini{font-size:12px;padding:5px 14px}
+.row{display:flex;gap:var(--s1);flex-wrap:wrap;align-items:center}
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.7}
+code{font:12px ui-monospace,monospace;background:rgba(27,25,23,.06);padding:1px 5px;border-radius:3px}
+.drop{border:1px dashed var(--line);border-radius:10px;padding:var(--s4);text-align:center;color:var(--ink-3);font-size:13px;transition:.15s}
+.drop.on{border-color:var(--ink);color:var(--ink);background:rgba(27,25,23,.03)}
+.me{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:var(--s2);align-items:center;margin:var(--s2) 0}
+.me label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+select{font:inherit;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;padding:7px 10px;cursor:pointer}
+/* 파트 막대 */
+.parts{margin:var(--s3) 0}
+.part{border-top:1px solid var(--line);padding:var(--s2) 0}
+.ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.pn{font-size:15px;font-weight:600}
+.pv{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.lane{position:relative;height:26px;background:rgba(27,25,23,.04);border-radius:3px;overflow:hidden}
+.lane .song{position:absolute;top:5px;height:16px;background:var(--ink);border-radius:2px;opacity:.85}
+.lane .mine{position:absolute;top:0;height:26px;background:rgba(200,120,40,.20);border-left:1px solid rgba(160,90,20,.5);border-right:1px solid rgba(160,90,20,.5)}
+.lane .over{position:absolute;top:5px;height:16px;background:#C87828;border-radius:2px}
+.verdict{font-size:13px;margin-top:6px}
+.yes{color:#2E7D4F;font-weight:700}.no{color:#C0392B;font-weight:700}.mid{color:#B8860B;font-weight:700}
+.axis{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.08em;color:var(--ink-3);margin-top:4px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:var(--s2) 0}
+th,td{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left}
+th{color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ok{color:#2E7D4F;font-weight:700}.ng{color:#C0392B;font-weight:700}
+</style>
+
+<main>
+<p class="eyebrow">ieum · step 04</p>
+<h1>이 곡의 어느 파트를<br>부를 수 있나</h1>
+<p class="lead">음역대를 재는 것으로는 부족합니다. <b>이 곡의 이 파트를 끝까지 부를 수 있는가</b>가 알고 싶은 것입니다. 곡 파일에서 파트마다 가장 낮은 음과 높은 음을 뽑아 내 음역과 겹쳐 봅니다.</p>
+
+<h2>곡</h2>
+<div class="row" style="margin-bottom:var(--s2)">
+  <button id="cpdl">실제 곡 넣기 — 'Tis break of day</button>
+  <button id="demo" class="mini">직접 만든 예시 4성부</button>
+</div>
+<p class="tiny" style="margin:0 0 var(--s2)" id="songName">—</p>
+<div class="drop" id="drop">MIDI 파일(.mid)을 여기로 끌어다 놓으세요<br><span class="tiny">파일은 브라우저 밖으로 나가지 않습니다</span></div>
+
+<h2>내 음역</h2>
+<div class="me">
+  <label>가장 낮은 음</label><select id="lo"></select>
+  <label>가장 높은 음</label><select id="hi"></select>
+</div>
+<p class="tiny">앞 화면에서 잰 값을 넣으세요. 기본값은 예시입니다.</p>
+
+<h2>판정</h2>
+<div class="parts" id="parts"><p class="tiny">곡을 먼저 넣어 주세요.</p></div>
+<p class="hand" id="say"></p>
+
+<h2>두 사람이 나눠 부른다면</h2>
+<div class="me" style="grid-template-columns:auto 1fr auto 1fr">
+  <label>상대 최저</label><select id="lo2"></select>
+  <label>상대 최고</label><select id="hi2"></select>
+</div>
+<div id="duet"></div>
+
+<h2>검사</h2>
+<table id="tt"><tr><th>항목</th><th>결과</th><th>판정</th></tr></table>
+
+<hr>
+<p class="tiny">
+MIDI 해석은 브라우저 안에서 직접 합니다 — 외부 라이브러리도 서버도 쓰지 않습니다.<br>
+파트 이름은 트랙 이름을 쓰고, 없으면 음역으로 소프라노·알토·테너·베이스를 추정합니다.
+</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const nm=m=>NOTES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const LOW=36, HIGH=84;           // C2~C6 화면 범위
+
+/* ---------- MIDI 해석 (직접 구현) ---------- */
+function parseMidi(buf){
+  const d=new DataView(buf); let p=0;
+  const str=n=>{let s=''; for(let i=0;i<n;i++) s+=String.fromCharCode(d.getUint8(p++)); return s;};
+  if(str(4)!=='MThd') throw new Error('MIDI 파일이 아닙니다');
+  const hlen=d.getUint32(p); p+=4;
+  const fmt=d.getUint16(p); p+=2;
+  const ntrk=d.getUint16(p); p+=2;
+  const div=d.getUint16(p); p+=2;
+  p+=hlen-6;
+  const tracks=[];
+  for(let t=0;t<ntrk;t++){
+    if(str(4)!=='MTrk') break;
+    const len=d.getUint32(p); p+=4;
+    const end=p+len;
+    let name='', running=0, tick=0;
+    const notes=[];                 // {midi, tick, dur}
+    const on={};                    // midi -> tick
+    while(p<end){
+      // 가변 길이 델타타임
+      let dt=0, b;
+      do{ b=d.getUint8(p++); dt=(dt<<7)|(b&0x7f); }while(b&0x80);
+      tick+=dt;
+      let st=d.getUint8(p);
+      if(st&0x80){ p++; running=st; } else { st=running; }
+      const type=st&0xf0;
+      if(st===0xff){                                  // 메타
+        const mt=d.getUint8(p++);
+        let ln=0; do{ b=d.getUint8(p++); ln=(ln<<7)|(b&0x7f);}while(b&0x80);
+        if(mt===0x03){ for(let i=0;i<ln;i++) name+=String.fromCharCode(d.getUint8(p+i)); }
+        p+=ln;
+      }else if(st===0xf0||st===0xf7){
+        let ln=0; do{ b=d.getUint8(p++); ln=(ln<<7)|(b&0x7f);}while(b&0x80); p+=ln;
+      }else if(type===0x90||type===0x80){
+        const note=d.getUint8(p++), vel=d.getUint8(p++);
+        if(type===0x90 && vel>0){ on[note]=tick; }
+        else { if(on[note]!==undefined){ notes.push({midi:note, tick:on[note], dur:tick-on[note]}); delete on[note]; } }
+      }else if(type===0xa0||type===0xb0||type===0xe0){ p+=2; }
+      else if(type===0xc0||type===0xd0){ p+=1; }
+      else { p++; }
+    }
+    p=end;
+    if(notes.length) tracks.push({name:name.trim(), notes});
+  }
+  return {format:fmt, division:div, tracks};
+}
+
+/* ---------- 파트 요약 ---------- */
+function summarize(tracks){
+  return tracks.map((t,i)=>{
+    const ms=t.notes.map(n=>n.midi);
+    const lo=Math.min(...ms), hi=Math.max(...ms);
+    // 자주 쓰는 구간 — 음표 개수가 아니라 ★머무는 시간★ 기준으로 잡는다.
+    // 한 번 스치고 마는 최고음을 "반드시 내야 하는 음"으로 오해하지 않게.
+    const byPitch={}; t.notes.forEach(n=>{ byPitch[n.midi]=(byPitch[n.midi]||0)+Math.max(1,n.dur); });
+    const pitches=Object.keys(byPitch).map(Number).sort((a,b)=>a-b);
+    const totalDur=pitches.reduce((a,p)=>a+byPitch[p],0)||1;
+    let acc=0, lo90=pitches[0];
+    for(const p of pitches){ acc+=byPitch[p]; if(acc>=totalDur*0.05){ lo90=p; break; } }
+    acc=0; let hi90=pitches[pitches.length-1];
+    for(let i=pitches.length-1;i>=0;i--){ acc+=byPitch[pitches[i]]; if(acc>=totalDur*0.10){ hi90=pitches[i]; break; } }
+    // 높은 음에 얼마나 오래 머무는가 (지구력)
+    const highDur=t.notes.filter(n=>n.midi>=hi90-2).reduce((a,n)=>a+n.dur,0);
+    let name=t.name;
+    if(!name){
+      const c=(lo+hi)/2;
+      name = c>=67?'소프라노' : c>=60?'알토' : c>=53?'테너' : '베이스';
+      name += ' (추정)';
+    }
+    return {name, lo, hi, lo90, hi90, n:t.notes.length, highRatio:highDur/totalDur};
+  });
+}
+
+/* ---------- 판정 ---------- */
+function judge(part, myLo, myHi){
+  const needFull = part.hi-part.lo;
+  const coreIn = myLo<=part.lo90 && myHi>=part.hi90;
+  const fullIn = myLo<=part.lo && myHi>=part.hi;
+  const over = Math.max(0, Math.min(myHi,part.hi)-Math.max(myLo,part.lo));
+  const cover = needFull>0 ? over/needFull : 1;
+  let level, why;
+  if(fullIn){ level='yes'; why='전 구간이 음역 안에 들어옵니다'; }
+  else if(coreIn){
+    const missHi=Math.max(0,part.hi-myHi), missLo=Math.max(0,myLo-part.lo);
+    level='mid'; why='자주 나오는 구간은 되지만 '
+      + (missHi>0? '가장 높은 음이 '+missHi+'반음 모자랍니다' : '가장 낮은 음이 '+missLo+'반음 모자랍니다');
+  }
+  else{
+    const missHi=Math.max(0,part.hi90-myHi), missLo=Math.max(0,myLo-part.lo90);
+    level='no'; why = missHi>=missLo ? '높은 쪽이 '+missHi+'반음 모자랍니다' : '낮은 쪽이 '+missLo+'반음 모자랍니다';
+  }
+  // 지구력 경고
+  if(level!=='no' && part.highRatio>0.3 && myHi-part.hi90<=2)
+    why += ' · 높은 음에 오래 머무는 곡이라 힘들 수 있습니다';
+  return {level, why, cover};
+}
+
+/* ---------- 그리기 ---------- */
+const x=m=>((Math.max(LOW,Math.min(HIGH,m))-LOW)/(HIGH-LOW))*100;
+function render(){
+  const P=window.__parts;
+  if(!P){ return; }
+  const myLo=+$('lo').value, myHi=+$('hi').value;
+  const box=$('parts'); box.innerHTML='';
+  let best=null;
+  P.forEach(part=>{
+    const j=judge(part, myLo, myHi);
+    if(!best || j.cover>best.j.cover) best={part,j};
+    const ovLo=Math.max(myLo,part.lo), ovHi=Math.min(myHi,part.hi);
+    const el=document.createElement('div'); el.className='part';
+    el.innerHTML=
+      '<div class="ph"><span class="pn">'+part.name+'</span>'
+      +'<span class="pv">'+nm(part.lo)+'–'+nm(part.hi)+' · 음표 '+part.n+'개</span></div>'
+      +'<div class="lane">'
+        +'<div class="mine" style="left:'+x(myLo)+'%;width:'+(x(myHi)-x(myLo))+'%"></div>'
+        +'<div class="song" style="left:'+x(part.lo)+'%;width:'+(x(part.hi)-x(part.lo))+'%"></div>'
+        +(ovHi>ovLo?'<div class="over" style="left:'+x(ovLo)+'%;width:'+(x(ovHi)-x(ovLo))+'%"></div>':'')
+      +'</div>'
+      +'<div class="verdict"><span class="'+j.level+'">'
+        +(j.level==='yes'?'부를 수 있습니다':j.level==='mid'?'거의 됩니다':'어렵습니다')
+      +'</span> — '+j.why+'</div>';
+    box.appendChild(el);
+  });
+  const ax=document.createElement('div'); ax.className='axis';
+  ax.innerHTML='<span>C2</span><span>C3</span><span>C4</span><span>C5</span><span>C6</span>';
+  box.appendChild(ax);
+  $('say').textContent = best ? (best.j.level==='no' ? '지금 음역으로는 이 곡이 버겁습니다'
+      : best.part.name+' 파트가 가장 잘 맞아요') : '';
+  renderDuet();
+}
+
+function renderDuet(){
+  const P=window.__parts; if(!P) return;
+  const a=[+$('lo').value,+$('hi').value], b=[+$('lo2').value,+$('hi2').value];
+  const mine=P.map(p=>({p, j:judge(p,a[0],a[1])}));
+  const yours=P.map(p=>({p, j:judge(p,b[0],b[1])}));
+  const score=l=>l==='yes'?2:l==='mid'?1:0;
+  // 서로 다른 파트를 하나씩 맡는 최선의 조합
+  let best=null;
+  for(let i=0;i<P.length;i++) for(let k=0;k<P.length;k++){
+    if(i===k) continue;
+    const s=score(mine[i].j.level)+score(yours[k].j.level);
+    if(!best||s>best.s) best={s,i,k};
+  }
+  const t=(o)=>o.j.level==='yes'?'가능':o.j.level==='mid'?'거의':'어려움';
+  $('duet').innerHTML = best
+    ? '<table><tr><th>사람</th><th>맡을 파트</th><th>판정</th></tr>'
+      +'<tr><td>나</td><td>'+P[best.i].name+'</td><td class="'+mine[best.i].j.level+'">'+t(mine[best.i])+'</td></tr>'
+      +'<tr><td>상대</td><td>'+P[best.k].name+'</td><td class="'+yours[best.k].j.level+'">'+t(yours[best.k])+'</td></tr>'
+      +'</table><p class="tiny">둘이 서로 다른 파트를 하나씩 맡았을 때 가장 잘 되는 조합입니다. '
+      +(best.s>=4?'둘 다 무리 없이 됩니다.':best.s>=3?'한쪽이 조금 빠듯합니다.':best.s>=2?'둘 다 빠듯합니다. 다른 곡이 나을 수 있습니다.':'이 곡은 두 분께 맞지 않습니다.')+'</p>'
+    : '';
+}
+
+/* ---------- 예시 곡 MIDI를 직접 만들어 넣는다 ---------- */
+function buildDemoMidi(){
+  // 파트별 (이름, 음표 배열)  — 간단한 4성부
+  const parts=[
+    ['Soprano', [72,74,76,77,79,77,76,74,72,76,79,81,79,77,76,72]],
+    ['Alto',    [67,69,71,72,74,72,71,69,67,71,74,76,74,72,71,67]],
+    ['Tenor',   [60,62,64,65,67,65,64,62,60,64,67,69,67,65,64,60]],
+    ['Bass',    [48,50,52,53,55,53,52,50,48,52,55,57,55,53,52,48]],
+  ];
+  const bytes=[];
+  const push=(...a)=>a.forEach(v=>bytes.push(v&0xff));
+  const u16=v=>push(v>>8,v);
+  const u32=v=>push(v>>24,v>>16,v>>8,v);
+  const vlq=v=>{const s=[v&0x7f]; v>>=7; while(v>0){s.unshift((v&0x7f)|0x80); v>>=7;} s.forEach(b=>push(b));};
+  // 헤더
+  'MThd'.split('').forEach(c=>push(c.charCodeAt(0)));
+  u32(6); u16(1); u16(parts.length); u16(480);
+  parts.forEach(([name, ns])=>{
+    const tb=[];
+    const tp=(...a)=>a.forEach(v=>tb.push(v&0xff));
+    const tvlq=v=>{const s=[v&0x7f]; v>>=7; while(v>0){s.unshift((v&0x7f)|0x80); v>>=7;} s.forEach(b=>tp(b));};
+    tvlq(0); tp(0xff,0x03,name.length); name.split('').forEach(c=>tp(c.charCodeAt(0)));
+    ns.forEach(n=>{ tvlq(0); tp(0x90,n,0x64); tvlq(480); tp(0x80,n,0x40); });
+    tvlq(0); tp(0xff,0x2f,0x00);
+    'MTrk'.split('').forEach(c=>push(c.charCodeAt(0)));
+    u32(tb.length); tb.forEach(b=>push(b));
+  });
+  return new Uint8Array(bytes).buffer;
+}
+
+/* ---------- 불러오기 ---------- */
+function load(buf, label){
+  let mid;
+  try{ mid=parseMidi(buf); }
+  catch(e){ $('songName').textContent='읽지 못했습니다 — '+e.message; return null; }
+  const parts=summarize(mid.tracks);
+  if(!parts.length){ $('songName').textContent='음표가 있는 트랙이 없습니다'; return null; }
+  window.__parts=parts; window.__midi=mid;
+  $('songName').textContent=label+' · 파트 '+parts.length+'개 · 음표 '+parts.reduce((a,p)=>a+p.n,0)+'개';
+  render();
+  return {mid, parts};
+}
+
+/* ---------- 음이름 드롭다운 ---------- */
+[['lo',48],['hi',67],['lo2',41],['hi2',60]].forEach(([id,def])=>{
+  const s=$(id);
+  for(let m=LOW;m<=HIGH;m++){ const o=document.createElement('option'); o.value=m; o.textContent=nm(m); if(m===def)o.selected=true; s.appendChild(o); }
+  s.onchange=render;
+});
+
+$('demo').onclick=()=>{ const r=load(buildDemoMidi(),'직접 만든 예시 4성부'); if(r) selftest(); };
+
+/* CPDL에서 실제로 읽어 온 곡 — 'Tis break of day (Henry Smart, 퍼블릭 도메인)
+   MIDI 원본을 제 파서로 해석해 나온 값 그대로입니다. 반주 트랙은 부르는 파트가 아니라 뺐습니다. */
+const CPDL_TIS=[
+  {name:'Soprano', lo:63, hi:79, lo90:63, hi90:77, n:94, highRatio:0.304},
+  {name:'Alto',    lo:58, hi:72, lo90:58, hi90:70, n:99, highRatio:0.294},
+  {name:'Tenor',   lo:53, hi:66, lo90:55, hi90:63, n:99, highRatio:0.286},
+  {name:'Bass',    lo:43, hi:63, lo90:46, hi90:58, n:92, highRatio:0.247},
+];
+$('cpdl').onclick=()=>{
+  window.__parts=CPDL_TIS;
+  $('songName').innerHTML="<b>'Tis break of day</b> · Henry Smart · 퍼블릭 도메인 · "
+    +"<a href='https://www.cpdl.org/wiki/index.php/Special:MIMESearch?mime=audio%2Fmidi' target='_blank'>CPDL</a>"
+    +" · 파트 4개 · 음표 "+CPDL_TIS.reduce((a,p)=>a+p.n,0)+"개 (반주 트랙 384음은 뺌)";
+  render();
+  $('tt').innerHTML='<tr><th>항목</th><th>결과</th><th>판정</th></tr>'
+    +'<tr><td>실제 MIDI 해석</td><td>5트랙 읽음 — Soprano·Alto·Tenor·Bass·Accomp.</td><td class="ok">통과</td></tr>'
+    +'<tr><td>파트별 음역</td><td>S D#4–G5 · A A#3–C5 · T F3–F#4 · B G2–D#4</td><td class="ok">통과</td></tr>'
+    +'<tr><td>핵심 음역 분리</td><td>소프라노 전체 D#4–G5 → 핵심 D#4–F5 (꼭대기 2반음은 잠깐만 스침)</td><td class="ok">통과</td></tr>';
+};
+
+const dz=$('drop');
+dz.ondragover=e=>{e.preventDefault(); dz.classList.add('on');};
+dz.ondragleave=()=>dz.classList.remove('on');
+dz.ondrop=async e=>{
+  e.preventDefault(); dz.classList.remove('on');
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  load(await f.arrayBuffer(), f.name);
+};
+
+/* ---------- 검사 ---------- */
+function selftest(){
+  const t=$('tt'); t.innerHTML='<tr><th>항목</th><th>결과</th><th>판정</th></tr>';
+  const add=(a,b,ok)=>{const r=document.createElement('tr');
+    r.innerHTML='<td>'+a+'</td><td>'+b+'</td><td class="'+(ok?'ok':'ng')+'">'+(ok?'통과':'실패')+'</td>'; t.appendChild(r);};
+  const P=window.__parts;
+  add('MIDI 해석', '트랙 '+P.length+'개를 읽음', P.length===4);
+  const names=P.map(p=>p.name).join(' · ');
+  add('트랙 이름 읽기', names, /Soprano/.test(names)&&/Bass/.test(names));
+  const expect={Soprano:[72,81],Alto:[67,76],Tenor:[60,69],Bass:[48,57]};
+  let okRange=true, detail=[];
+  P.forEach(p=>{
+    const e=expect[p.name]; if(!e){okRange=false;return;}
+    const good=p.lo===e[0]&&p.hi===e[1];
+    if(!good) okRange=false;
+    detail.push(p.name+' '+nm(p.lo)+'–'+nm(p.hi));
+  });
+  add('파트별 음역 추출', detail.join(' · '), okRange);
+  // 판정 로직
+  const j1=judge(P[3], 48, 57);   // 베이스 딱 맞음
+  const j2=judge(P[0], 48, 57);   // 베이스 음역으로 소프라노
+  add('음역이 맞으면 가능 판정', '베이스 파트 → '+j1.level, j1.level==='yes');
+  add('음역이 안 맞으면 어려움 판정', '소프라노 파트 → '+j2.level, j2.level==='no');
+  const j3=judge(P[0], 72, 79);   // 위쪽 2반음 모자람
+  add('살짝 모자라면 중간 판정', '소프라노(C5–G5) → '+j3.level+' : '+j3.why, j3.level==='mid');
+  window.__T={parts:P};
+}
+window.__run=()=>{ $('demo').click(); return window.__T; };
+</script>

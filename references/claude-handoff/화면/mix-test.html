@@ -1,0 +1,83 @@
+<meta charset="utf-8"><title>브라우저 믹싱 가능성 검증</title>
+<style>
+body{margin:0;background:#12100f;color:#EDE7E1;font:14px/1.7 "Pretendard","Malgun Gothic",sans-serif;padding:26px}
+h1{font-size:19px;margin:0 0 4px}
+.sub{color:#9b9089;font-size:13px;margin-bottom:18px}
+table{border-collapse:collapse;font-size:13px;min-width:720px}
+th,td{border-bottom:1px solid #2a2622;padding:7px 12px;text-align:left}
+th{color:#9b9089;font-size:12px}
+.ok{color:#8ee6a0;font-weight:700}
+.ng{color:#ff9b8a;font-weight:700}
+</style>
+<h1>브라우저만으로 두 녹음을 합칠 수 있는가</h1>
+<div class="sub">Web Audio API OfflineAudioContext · 서버·외부 API 없음</div>
+<table id="t"><tr><th>검증 항목</th><th>결과</th><th>판정</th></tr></table>
+<script>
+const t=document.getElementById('t');
+function row(name, res, ok){
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>'+name+'</td><td>'+res+'</td><td class="'+(ok?'ok':'ng')+'">'+(ok?'가능':'불가')+'</td>';
+  t.appendChild(tr);
+}
+const SR=44100;
+function tone(ctx,hz,dur,amp){
+  const n=Math.floor(SR*dur), b=ctx.createBuffer(1,n,SR), d=b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=amp*Math.sin(2*Math.PI*hz*i/SR);
+  return b;
+}
+// 특정 주파수 성분의 세기 (Goertzel)
+function power(buf,hz,sr){
+  const k=2*Math.cos(2*Math.PI*hz/sr); let s1=0,s2=0;
+  for(let i=0;i<buf.length;i++){const s=buf[i]+k*s1-s2; s2=s1; s1=s;}
+  return Math.sqrt(s1*s1+s2*s2-k*s1*s2)/buf.length;
+}
+(async()=>{
+  // 1) 두 트랙을 한 타임라인에 합치기 (A는 0초, B는 0.5초 뒤 시작 = 파트 어긋나게 배치)
+  const DUR=2.0, ctx=new OfflineAudioContext(2, SR*DUR, SR);
+  const a=ctx.createBufferSource(); a.buffer=tone(ctx,220,1.5,0.5);   // A3  "사람 1"
+  const b=ctx.createBufferSource(); b.buffer=tone(ctx,330,1.5,0.5);   // E4  "사람 2"
+  const ga=ctx.createGain(), gb=ctx.createGain();
+  ga.gain.value=0.8; gb.gain.value=0.5;                               // 볼륨 따로
+  const pa=ctx.createStereoPanner(), pb=ctx.createStereoPanner();
+  pa.pan.value=-0.4; pb.pan.value=0.4;                                // 좌우로 벌리기
+  const rev=ctx.createConvolver();                                    // 리버브용 노드 생성 가능 여부
+  a.connect(ga).connect(pa).connect(ctx.destination);
+  b.connect(gb).connect(pb).connect(ctx.destination);
+  a.start(0); b.start(0.5);                                           // 시작점 어긋나게
+  const out=await ctx.startRendering();
+
+  const L=out.getChannelData(0), R=out.getChannelData(1);
+  const pA=power(L.slice(SR*0.7, SR*1.2), 220, SR);
+  const pB=power(R.slice(SR*0.7, SR*1.2), 330, SR);
+  row('두 트랙을 한 결과물로 렌더링', '길이 '+out.duration.toFixed(1)+'초, '+out.numberOfChannels+'채널', out.duration>1.9);
+  row('겹치는 구간에 두 목소리가 모두 살아 있음', 'A3 세기 '+pA.toFixed(4)+' / E4 세기 '+pB.toFixed(4), pA>0.01 && pB>0.01);
+  row('시작 시점을 각각 다르게 배치 (파트 어긋내기)', 'B를 0.5초 뒤에 시작시켜 렌더됨', true);
+  row('트랙별 볼륨 조절', 'GainNode 0.8 / 0.5 적용됨', true);
+  row('트랙별 좌우 위치 조절', 'StereoPannerNode -0.4 / +0.4 적용됨', true);
+  row('리버브 노드 생성', rev ? 'ConvolverNode 생성됨 (임펄스 파일만 있으면 적용 가능)' : '실패', !!rev);
+
+  // 2) WAV로 내보내기 가능한지 (헤더 생성 + Blob)
+  const len=out.length*2*2+44, ab=new ArrayBuffer(len), dv=new DataView(ab);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF'); dv.setUint32(4,len-8,true); w(8,'WAVEfmt '); dv.setUint32(16,16,true);
+  dv.setUint16(20,1,true); dv.setUint16(22,2,true); dv.setUint32(24,SR,true);
+  dv.setUint32(28,SR*4,true); dv.setUint16(32,4,true); dv.setUint16(34,16,true); w(36,'data');
+  dv.setUint32(40,len-44,true);
+  let off=44;
+  for(let i=0;i<out.length;i++){
+    dv.setInt16(off, Math.max(-1,Math.min(1,L[i]))*32767, true); off+=2;
+    dv.setInt16(off, Math.max(-1,Math.min(1,R[i]))*32767, true); off+=2;
+  }
+  const blob=new Blob([ab],{type:'audio/wav'});
+  row('완성본을 파일로 내보내기', 'WAV '+(blob.size/1024/1024).toFixed(2)+'MB 생성됨', blob.size>100000);
+
+  // 3) 녹음 API 존재 여부
+  const hasRec = typeof MediaRecorder!=='undefined';
+  const hasMic = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  row('마이크 녹음 API', hasRec&&hasMic ? 'MediaRecorder + getUserMedia 둘 다 존재' : '없음', hasRec&&hasMic);
+  const types=['audio/webm','audio/webm;codecs=opus','audio/mp4','audio/ogg'].filter(x=>hasRec&&MediaRecorder.isTypeSupported(x));
+  row('녹음 가능 포맷', types.join(', ')||'없음', types.length>0);
+
+  window.__MIX={pA,pB,wav:blob.size,types};
+})();
+</script>

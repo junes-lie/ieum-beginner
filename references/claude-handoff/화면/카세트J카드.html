@@ -1,0 +1,412 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 카세트와 J카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EFE8; --ink:#1B1917; --ink-2:#6B635B; --ink-3:#A79E93; --line:#D9D2C6;
+  --card:#EDE7DA; --shell:#2A2724; --shellhi:#3A3631; --tape:#5B4A3A;
+  --p1:#C05621; --p2:#2C5282;
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;--s10:80px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:860px;margin:0 auto;padding:var(--s10) var(--s3);position:relative;z-index:1}
+/* 화면 테두리를 도는 테이프 */
+#loop{position:fixed;inset:0;z-index:0;pointer-events:none}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:32px;line-height:1.13;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:var(--s6) 0 var(--s2)}
+.lead{font-size:16px;color:var(--ink-2);margin:0 0 var(--s4);max-width:48ch}
+button{font:inherit;font-size:14px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:11px 24px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.28;cursor:default}
+button.mini{font-size:12px;padding:6px 15px}
+.row{display:flex;gap:var(--s1);flex-wrap:wrap;align-items:center}
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.7}
+
+/* 상태 표시 */
+.steps{display:flex;gap:var(--s2);margin:var(--s3) 0 var(--s2);flex-wrap:wrap}
+.step{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:7px}
+.step i{width:8px;height:8px;border-radius:50%;border:1px solid var(--ink-3);display:inline-block}
+.step.done{color:var(--ink)}
+.step.done i{background:var(--ink);border-color:var(--ink)}
+.step.act i{border-color:var(--ink);box-shadow:0 0 0 3px rgba(27,25,23,.10)}
+
+/* 카세트 */
+.stage{display:flex;justify-content:center;padding:var(--s3) 0}
+svg.cass{width:100%;max-width:460px;height:auto}
+
+/* J카드 */
+.jwrap{overflow-x:auto;padding-bottom:var(--s1)}
+.jcard{display:grid;grid-template-columns:260px 34px 260px;min-width:554px;
+  background:var(--card);border:1px solid #CFC6B4;border-radius:3px;
+  box-shadow:0 1px 0 #fff inset, 0 10px 24px -18px rgba(0,0,0,.5)}
+.jcard > div{padding:14px 16px;position:relative}
+.fold{border-left:1px dashed #C7BCA6;border-right:1px dashed #C7BCA6;
+  display:flex;align-items:center;justify-content:center}
+.spine{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--ink-2)}
+.jlabel{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#A89C86;margin-bottom:10px}
+.side{font-size:10px;letter-spacing:.14em;color:#8C816E;border-bottom:1px solid #D6CCB8;padding-bottom:4px;margin:0 0 6px}
+.line{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:baseline;
+  border-bottom:1px dotted #CFC4AE;padding:5px 0;min-height:27px}
+.num{font-size:9px;color:#A89C86}
+.val{white-space:nowrap;overflow:hidden}
+.val span{display:inline-block;clip-path:inset(0 100% 0 0);transition:clip-path 1.1s cubic-bezier(.22,.61,.36,1)}
+.val.show span{clip-path:inset(0 0 0 0)}
+.h1f{font-family:"Nanum Pen Script",cursive;font-size:21px;line-height:1.1;color:var(--p1)}
+.h2f{font-family:"Gaegu",cursive;font-size:18px;line-height:1.15;color:var(--p2)}
+.dur{font-size:10px;color:#A89C86;font-variant-numeric:tabular-nums}
+.front .title{font-family:"Nanum Pen Script",cursive;font-size:38px;line-height:1;margin:34px 0 6px}
+.front .sub{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8C816E}
+.names{margin-top:42px;font-size:12px;color:#8C816E}
+.names b{font-weight:400;display:block;margin-bottom:4px}
+.pair{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;margin-top:2px}
+.names .n1{font-family:"Nanum Pen Script",cursive;font-size:22px;color:var(--p1);line-height:1;white-space:nowrap}
+.names .n2{font-family:"Gaegu",cursive;font-size:19px;color:var(--p2);line-height:1;white-space:nowrap}
+.joinline{display:block;width:100%;height:22px}
+
+table{border-collapse:collapse;width:100%;font-size:13px;margin:var(--s2) 0}
+th,td{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left}
+th{color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ok{color:#2E7D4F;font-weight:700}.ng{color:#C0392B;font-weight:700}
+</style>
+
+<svg id="loop" aria-hidden="true"></svg>
+
+<main>
+<p class="eyebrow">ieum · step 05</p>
+<h1>카세트가 감기고<br>J카드가 채워집니다</h1>
+<p class="lead">한 사람이 녹음하면 왼쪽 릴이 돌고, 다른 사람이 녹음하면 오른쪽 릴이 돕니다. 둘 다 끝나면 늘어져 있던 테이프가 카세트 안으로 전부 들어갑니다. 같은 동안 J카드의 빈 칸이 <b>서로 다른 손글씨</b>로 채워집니다.</p>
+
+<div class="steps" id="steps"></div>
+
+<div class="row" style="margin-bottom:var(--s2)">
+  <button id="r1">사람 1 녹음</button>
+  <button id="r2" disabled>사람 2 녹음</button>
+  <button id="reset" class="mini">처음으로</button>
+  <button id="auto" class="mini">전체 흐름 한번에 보기</button>
+  <button id="cap" class="mini">첫 글자: 대문자 I</button>
+</div>
+<p class="tiny" id="msg" style="min-height:20px;margin:0 0 var(--s2)"></p>
+
+<div class="stage" id="stage"></div>
+<div id="tapespace"></div>
+
+<h2>J카드</h2>
+<div class="jwrap">
+<div class="jcard">
+  <div class="back">
+    <div class="jlabel">Rear panel · 트랙리스트</div>
+    <p class="side">Side A — 사람 1</p>
+    <div id="sideA"></div>
+    <p class="side" style="margin-top:14px">Side B — 사람 2</p>
+    <div id="sideB"></div>
+  </div>
+  <div class="fold"><div class="spine" id="spine">이음 · 별빛 사이</div></div>
+  <div class="front">
+    <div class="jlabel">Front panel · 표지</div>
+    <div class="title" id="ftitle">별빛 사이</div>
+    <div class="sub">IEUM · DUET NO.01</div>
+    <div class="names">
+      <b>부른 사람</b>
+      <div class="pair">
+        <span class="n1" id="nm1">—</span>
+        <svg class="joinline" id="join" viewBox="0 0 120 22" preserveAspectRatio="none"></svg>
+        <span class="n2" id="nm2">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<p class="tiny" style="margin-top:var(--s2)">두 이름을 잇는 선은 <b>둘 다 끝났을 때만</b> 그려집니다. 이어짐이 곧 완주 표시입니다.</p>
+
+<h2>검사</h2>
+<table id="tt"><tr><th>항목</th><th>결과</th><th>판정</th></tr></table>
+
+<hr>
+<p class="tiny">
+카세트는 SVG를 좌표에서 직접 계산해 그립니다 — 이미지 파일이 아닙니다. 릴에 감긴 테이프 두께도 진행률에서 나온 값입니다.<br>
+손글씨는 나눔손글씨 펜(사람 1)과 개구(사람 2)입니다. 둘 다 무료이고 상업적으로 쓸 수 있습니다.
+</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const W=460,H=290;
+let L=0, R=0;                  // 왼쪽·오른쪽 릴 감김 정도 0~1
+let WINDER='L';                // 지금 감고 있는 쪽 (누구의 화면인가)
+let spin=0, raf=null, spinning=null;
+
+/* ---------- 카세트 그리기 ---------- */
+function reel(cx,cy,fill,ang){
+  const rOut=14+26*fill;                       // 감긴 테이프 바깥 반지름
+  let s='';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rOut.toFixed(1)+'" fill="#4A3B2E"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(rOut-1).toFixed(1)+'" fill="none" stroke="#6B584A" stroke-width=".6" opacity=".55"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+((rOut+14)/2).toFixed(1)+'" fill="none" stroke="#6B584A" stroke-width=".5" opacity=".35"/>';
+  // 허브 (톱니 6개) — 회전
+  s+='<g transform="rotate('+ang.toFixed(1)+' '+cx+' '+cy+')">';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="13.5" fill="#E8E2D6"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="6" fill="#2A2724"/>';
+  for(let i=0;i<6;i++){
+    const a=i*60*Math.PI/180;
+    const x1=cx+Math.cos(a)*6.4, y1=cy+Math.sin(a)*6.4;
+    const x2=cx+Math.cos(a)*12.6, y2=cy+Math.sin(a)*12.6;
+    s+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#2A2724" stroke-width="3.4" stroke-linecap="round"/>';
+  }
+  s+='</g>';
+  return s;
+}
+function draw(){
+  const cxL=150, cxR=310, cy=126;
+  const done=(L+R)/2;
+  const sag = 92*(1-done);                      // 늘어진 정도
+  const y0=190, ctrlY=y0+sag;
+  let s='';
+  // 몸체
+  s+='<rect x="18" y="16" width="424" height="196" rx="9" fill="var(--shell)"/>';
+  s+='<rect x="18" y="16" width="424" height="196" rx="9" fill="none" stroke="#4A453F" stroke-width="1"/>';
+  s+='<rect x="26" y="24" width="408" height="10" rx="5" fill="var(--shellhi)" opacity=".7"/>';
+  // 라벨 종이
+  s+='<rect x="42" y="38" width="376" height="52" rx="2" fill="#EDE7DA"/>';
+  s+='<text x="56" y="62" font-family="Nanum Pen Script, cursive" font-size="21" fill="#1B1917">별빛 사이</text>';
+  s+='<text x="56" y="80" font-size="8.5" letter-spacing="2.4" fill="#8C816E">IEUM · DUET NO.01</text>';
+  s+='<text x="404" y="80" font-size="9" text-anchor="end" fill="#8C816E">'+Math.round(done*100)+'%</text>';
+  // 창
+  s+='<rect x="96" y="96" width="268" height="62" rx="6" fill="#15130F"/>';
+  s+='<rect x="96" y="96" width="268" height="62" rx="6" fill="none" stroke="#4A453F"/>';
+  // 창 안: 두 릴 사이 연결 테이프
+  s+='<line x1="'+cxL+'" y1="'+cy+'" x2="'+cxR+'" y2="'+cy+'" stroke="#3A2E24" stroke-width="3"/>';
+  s+=reel(cxL,cy,L,spin*(L<1?1:1));
+  s+=reel(cxR,cy,R,-spin);
+  // 아래 구멍
+  s+='<circle cx="150" cy="182" r="7" fill="#15130F"/><circle cx="310" cy="182" r="7" fill="#15130F"/>';
+  s+='<rect x="196" y="176" width="68" height="12" rx="2" fill="#15130F"/>';
+  $('stage').innerHTML='<svg class="cass" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="카세트 테이프">'+s+'</svg>';
+  drawLoop();
+}
+
+/* ---------- 테이프가 글자를 이룬다 — 한 붓으로 쓴 'ieum' ----------
+   자체 좌표계: 가로 0~250, 베이스라인 y=110, 소문자 윗선 y=56               */
+/* 글자 자체 좌표 — 베이스라인 106, 소문자 윗선 66, 대문자 꼭대기 24.
+   아치는 폭 36~40 · 높이 40 으로 잡아 둥글게 만든다 (뾰족하면 ∧ 로 읽힌다). */
+const LW=320;                       // 글자 전체 폭
+let CAP=true;                       // 첫 글자를 대문자 I 로 쓸지
+function letters(tx,ty,s){
+  const P=(x,y)=>(tx+x*s).toFixed(1)+' '+(ty+y*s).toFixed(1);
+  return (CAP
+    // I — 위로 크게 올라가 꼭대기에서 고리를 돌고 내려온다
+    ? 'M '+P(2,96)
+      +' C '+P(6,76)+', '+P(12,42)+', '+P(26,30)
+      +' C '+P(38,21)+', '+P(46,34)+', '+P(36,48)
+      +' C '+P(30,60)+', '+P(26,84)+', '+P(28,98)
+      +' C '+P(29,106)+', '+P(36,108)+', '+P(44,102)
+    // i — 살짝 굽은 세로획 하나
+    : 'M '+P(0,102)
+      +' C '+P(10,100)+', '+P(16,88)+', '+P(22,68)
+      +' C '+P(26,86)+', '+P(28,98)+', '+P(32,104)
+  )
+  // e — 오른쪽 위로 올라가 한 바퀴 돌고 내려온다
+  +' C '+P(CAP?50:38,112)+', '+P(CAP?52:48,110)+', '+P(56,100)
+  +' C '+P(66,88)+', '+P(64,68)+', '+P(52,69)
+  +' C '+P(40,70)+', '+P(36,92)+', '+P(46,102)
+  +' C '+P(56,112)+', '+P(74,110)+', '+P(84,100)
+  // u — ∪ 하나 + 오른쪽 꼬리
+  +' C '+P(88,90)+', '+P(94,74)+', '+P(96,66)
+  +' C '+P(98,82)+', '+P(100,98)+', '+P(112,105)
+  +' C '+P(126,112)+', '+P(132,94)+', '+P(134,66)
+  +' C '+P(136,82)+', '+P(137,96)+', '+P(142,104)
+  // m — 꼭대기가 둥근 ∩ 세 개
+  +' C '+P(146,108)+', '+P(150,108)+', '+P(154,104)
+  +' C '+P(156,88)+', '+P(160,66)+', '+P(172,66)
+  +' C '+P(184,66)+', '+P(190,88)+', '+P(190,106)
+  +' C '+P(190,88)+', '+P(196,66)+', '+P(208,66)
+  +' C '+P(220,66)+', '+P(226,88)+', '+P(226,106)
+  +' C '+P(226,88)+', '+P(232,66)+', '+P(244,66)
+  +' C '+P(256,66)+', '+P(262,88)+', '+P(262,106)
+  // 마무리 — 오른쪽으로 길게 빠져나간다
+  +' C '+P(268,116)+', '+P(290,118)+', '+P(LW,102);
+}
+function loopPath(){
+  const st=$('stage').querySelector('svg');
+  if(!st) return null;
+  const r=st.getBoundingClientRect();
+  if(!r.width) return null;
+  const px=(x,y)=>[r.left+x/W*r.width, r.top+y/H*r.height];
+  const [lx,ly]=px(150,126), [rx,ry]=px(310,126);      // 두 릴의 화면 좌표
+  const [hx,hy]=px(150,208), [gx,gy]=px(310,208);      // 카세트 아래쪽 구멍
+  // 글자 크기·위치 — 카세트 아래, 화면 폭에 맞춰
+  const s=Math.min((innerWidth*0.78)/LW, 2.4);
+  const top=CAP?21:66;                                  // 글자 꼭대기
+  const lw=LW*s;
+  const tx=(innerWidth-lw)/2;
+  const ty=r.bottom+54-top*s;                           // 카세트 아래에 글자 꼭대기를 붙인다
+  // 글자가 들어갈 만큼 본문에 자리를 비워 둔다
+  const need=Math.ceil((106-top)*s+90);
+  $('tapespace').style.height=need+'px';
+  const L0=[tx+(CAP?2:0)*s, ty+(CAP?96:102)*s], L1=[tx+LW*s, ty+102*s];   // 글자 시작·끝
+  return 'M '+lx+' '+ly
+    // 왼쪽 릴 → 카세트 아래로 빠져나와 글자 시작점으로
+    +' C '+lx+' '+(hy+30)+', '+(L0[0]-60)+' '+(ty+20)+', '+L0[0]+' '+L0[1]
+    + letters(tx,ty,s).slice(letters(tx,ty,s).indexOf(' C'))
+    // 글자 끝 → 오른쪽으로 돌아 카세트 오른쪽 릴로
+    +' C '+(L1[0]+90)+' '+(L1[1]-30)+', '+(rx+120)+' '+(gy+20)+', '+rx+' '+ry;
+}
+function drawLoop(){
+  const d=loopPath(); const svg=$('loop');
+  if(!d){ svg.innerHTML=''; return; }
+  svg.setAttribute('viewBox','0 0 '+innerWidth+' '+innerHeight);
+  // 이 화면은 "내 녹음 화면"이다. 한 번 녹음하면 테이프가 전부 감긴다.
+  //   사람 1 (왼쪽 릴) → 글자 오른쪽 끝부터 당겨 들어간다
+  //   사람 2 (오른쪽 릴) → 글자 왼쪽 시작부터 당겨 들어간다
+  const p=(WINDER==='L'? L : R);
+  const vis=Math.max(0, 1-p);
+  const dash = WINDER==='L'
+    ? vis.toFixed(4)+' 1'                                    // 끝부터 사라짐
+    : '0 '+p.toFixed(4)+' '+vis.toFixed(4)+' 1';             // 시작부터 사라짐
+  const op=(0.34+0.52*vis).toFixed(2);
+  svg.innerHTML=
+     '<path d="'+d+'" pathLength="1" stroke-dasharray="'+dash+'" fill="none" '
+    +'stroke="var(--tape)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="'+op+'"/>'
+    +'<path d="'+d+'" pathLength="1" stroke-dasharray="'+dash+'" fill="none" '
+    +'stroke="#9A8570" stroke-width="1" stroke-linecap="round" opacity="'+(op*0.55).toFixed(2)+'" transform="translate(0,-1.5)"/>';
+}
+addEventListener('resize', drawLoop);
+addEventListener('scroll', drawLoop, {passive:true});
+
+/* ---------- J카드 ---------- */
+const TRACKS={
+  A:[['01','별빛 사이 — 1절','1:24'],['02','별빛 사이 — 후렴','0:48'],['03','화음 얹기','0:31']],
+  B:[['01','별빛 사이 — 2절','1:19'],['02','별빛 사이 — 후렴','0:48'],['03','끝맺음','0:22']],
+};
+function buildLines(){
+  ['A','B'].forEach(side=>{
+    $('side'+side).innerHTML=TRACKS[side].map(([n,t,d])=>
+      '<div class="line"><span class="num">'+n+'</span>'
+      +'<span class="val '+(side==='A'?'h1f':'h2f')+'"><span>'+t+'</span></span>'
+      +'<span class="dur">'+d+'</span></div>').join('');
+  });
+}
+function fillSide(side, on){
+  const els=$('side'+side).querySelectorAll('.val');
+  els.forEach((el,i)=>{ setTimeout(()=>el.classList.toggle('show',on), on? i*380 : 0); });
+}
+function drawJoin(on){
+  const svg=$('join');
+  if(!on){ svg.innerHTML=''; return; }
+  // 두 이름을 잇는 한 획 — 왼쪽 이름에서 출발해 오른쪽 이름으로 이어진다
+  const d='M 2 15 C 24 4, 44 20, 62 11 S 98 4, 118 9';
+  svg.innerHTML='<path d="'+d+'" fill="none" stroke="#1B1917" stroke-width="1.4" stroke-linecap="round" '
+    +'vector-effect="non-scaling-stroke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1">'
+    +'<animate attributeName="stroke-dashoffset" from="1" to="0" dur="1.4s" fill="freeze" calcMode="spline" keySplines="0.22 0.61 0.36 1" keyTimes="0;1"/></path>';
+}
+
+/* ---------- 상태 ---------- */
+const STEPS=[['빈 테이프',0],['사람 1 녹음',1],['사람 2 녹음',2],['완성',3]];
+let stage=0;
+function renderSteps(){
+  $('steps').innerHTML=STEPS.map(([t],i)=>
+    '<span class="step '+(i<stage?'done':i===stage?'act':'')+'"><i></i>'+t+'</span>').join('');
+}
+function spinTo(which, ms, done){
+  const t0=performance.now();
+  const from=which==='L'?L:R;
+  spinning=which;
+  cancelAnimationFrame(raf);
+  (function tick(t){
+    const k=Math.min(1,(t-t0)/ms);
+    const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;          // ease-in-out
+    if(which==='L') L=from+(1-from)*e; else R=from+(1-from)*e;
+    spin += 6.2*(1-0.35*e);                              // 감길수록 느려진다
+    draw();
+    if(k<1) raf=requestAnimationFrame(tick); else { spinning=null; done&&done(); }
+  })(t0);
+}
+function reset(){
+  cancelAnimationFrame(raf);
+  L=R=0; spin=0; stage=0; spinning=null; WINDER='L';
+  buildLines(); fillSide('A',false); fillSide('B',false); drawJoin(false);
+  $('nm1').textContent='—'; $('nm2').textContent='—';
+  $('r1').disabled=false; $('r2').disabled=true;
+  $('msg').textContent='테이프가 밖으로 늘어져 있습니다. 아직 아무도 부르지 않았습니다.';
+  renderSteps(); draw();
+}
+function rec1(cb){
+  stage=1; renderSteps(); WINDER='L';
+  $('r1').disabled=true; $('r2').disabled=true;
+  $('msg').textContent='사람 1의 화면 — 왼쪽 릴이 돌고, 테이프가 글자 오른쪽 끝부터 당겨 들어갑니다';
+  fillSide('A',true);
+  $('nm1').textContent='유나';
+  spinTo('L',2600,()=>{
+    stage=2; renderSteps(); $('r2').disabled=false;
+    $('msg').textContent='사람 1의 A면이 채워졌습니다. 이제 상대를 기다립니다.';
+    cb&&cb();
+  });
+}
+function rec2(cb){
+  stage=2; renderSteps();
+  // 사람 2의 화면으로 넘어간다.
+  // 사람 1이 감아 둔 왼쪽 릴은 그대로 두고, 테이프만 다시 펼친 채로 시작한다.
+  WINDER='R'; R=0; cancelAnimationFrame(raf); draw();
+  $('r2').disabled=true;
+  $('msg').textContent='사람 2의 화면 — 오른쪽 릴이 돌고, 테이프가 글자 왼쪽 시작부터 당겨 들어갑니다';
+  fillSide('B',true);
+  $('nm2').textContent='준';
+  spinTo('R',2600,()=>{
+    stage=3; renderSteps();
+    drawJoin(true);
+    $('msg').textContent='테이프가 전부 안으로 들어갔습니다. 하나의 완성품이 되었습니다.';
+    cb&&cb();
+  });
+}
+$('r1').onclick=()=>rec1();
+$('r2').onclick=()=>rec2();
+$('reset').onclick=reset;
+$('cap').onclick=()=>{ CAP=!CAP; $('cap').textContent='첫 글자: '+(CAP?'대문자 I':'소문자 i'); drawLoop(); };
+$('auto').onclick=()=>{ reset(); setTimeout(()=>rec1(()=>setTimeout(()=>rec2(),700)),500); };
+
+reset();
+
+/* ---------- 검사 ---------- */
+window.__T=async ()=>{
+  const t=$('tt'); t.innerHTML='<tr><th>항목</th><th>결과</th><th>판정</th></tr>';
+  const add=(a,b,ok)=>{const r=document.createElement('tr');
+    r.innerHTML='<td>'+a+'</td><td>'+b+'</td><td class="'+(ok?'ok':'ng')+'">'+(ok?'통과':'실패')+'</td>'; t.appendChild(r);};
+  reset(); drawLoop();
+  // dasharray 는 감는 쪽에 따라 모양이 다르다: 'v 1' (끝부터) 또는 '0 p v 1' (시작부터)
+  const vis=()=>{ const p=$('loop').querySelector('path');
+    if(!p) return 0;
+    const a=p.getAttribute('stroke-dasharray').split(' ').map(Number);
+    return a.length===2 ? a[0] : a[2]; };
+  add('시작 상태 — 테이프가 화면을 한 바퀴 두름', '남은 길이 '+(vis()*100).toFixed(0)+'%', vis()>0.98);
+  const fonts=[getComputedStyle(document.querySelector('#sideA .val')).fontFamily,
+               getComputedStyle(document.querySelector('#sideB .val')).fontFamily];
+  add('두 사람의 손글씨가 서로 다름', fonts.map(f=>f.split(',')[0].replace(/"/g,'')).join(' vs '),
+      fonts[0]!==fonts[1]);
+  await new Promise(r=>{ rec1(r); });
+  const mid=vis();
+  add('사람 1 뒤 — 왼쪽 릴만 감김', 'L='+L.toFixed(2)+' R='+R.toFixed(2), L>0.99 && R<0.01);
+  add('내 녹음 하나로 테이프가 전부 감김', '남은 길이 '+(mid*100).toFixed(0)+'%', mid<0.01);
+  const aShown=$('sideA').querySelectorAll('.val.show').length;
+  add('A면만 채워짐', 'A면 '+aShown+'줄 / B면 '+$('sideB').querySelectorAll('.val.show').length+'줄',
+      aShown===3 && $('sideB').querySelectorAll('.val.show').length===0);
+  add('둘 다 끝나기 전에는 잇는 선이 없음', $('join').innerHTML.length?'그려짐':'없음', !$('join').innerHTML.length);
+  await new Promise(r=>{ rec2(r); });
+  add('사람 2 뒤 — 테이프가 전부 안으로', '남은 길이 '+(vis()*100).toFixed(0)+'%', vis()<0.01);
+  add('사람 2 화면에서도 왼쪽 릴은 감긴 채로', 'L='+L.toFixed(2)+' R='+R.toFixed(2), L>0.99 && R>0.99);
+  add('두 이름을 잇는 선이 그려짐', $('join').querySelector('path')?'그려짐':'없음', !!$('join').querySelector('path'));
+  add('B면도 채워짐', $('sideB').querySelectorAll('.val.show').length+'줄', $('sideB').querySelectorAll('.val.show').length===3);
+  // 감기는 방향 — 절반만 감았을 때 어느 쪽이 남아 있는지 확인한다
+  const half=(w)=>{ WINDER=w; L=R=0; if(w==='L') L=0.5; else R=0.5; drawLoop();
+    return $('loop').querySelector('path').getAttribute('stroke-dasharray'); };
+  const dL=half('L'), dR=half('R');
+  add('사람 1 — 오른쪽 끝부터 감김', dL+'  (앞쪽 50%만 남음)', /^0\.5000 1$/.test(dL));
+  add('사람 2 — 왼쪽 시작부터 감김', dR+'  (뒤쪽 50%만 남음)', /^0 0\.5000 0\.5000 1$/.test(dR));
+  const out={L,R,stage}; reset(); return out;
+};
+</script>

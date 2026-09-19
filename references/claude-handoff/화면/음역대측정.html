@@ -1,0 +1,317 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 음역대 재기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EFE8; --ink:#1B1917; --ink-2:#6B635B; --ink-3:#A79E93;
+  --line:#D9D2C6; --accent:#1B1917;
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s6:48px; --s8:64px; --s10:80px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased}
+main{max-width:720px;margin:0 auto;padding:var(--s10) var(--s3) var(--s10)}
+
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:32px;line-height:1.13;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+.lead{font-size:16px;line-height:1.5;color:var(--ink-2);margin:0 0 var(--s6);max-width:46ch}
+.hand{font-family:"Nanum Pen Script",cursive;font-size:26px;line-height:1.35;color:var(--accent)}
+
+button{font:inherit;font-size:14px;border:1px solid var(--ink);background:transparent;color:var(--ink);
+  border-radius:999px;padding:11px 26px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.3;cursor:default}
+.row{display:flex;gap:var(--s1);align-items:center;flex-wrap:wrap}
+
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+
+/* 현재 음 */
+.now{display:grid;grid-template-columns:1fr auto;gap:var(--s3);align-items:end;margin:var(--s4) 0 var(--s3)}
+.note{font-size:72px;line-height:1;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.note small{font-size:24px;color:var(--ink-3);margin-left:6px}
+.hz{font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums;text-align:right}
+.cents{height:3px;background:var(--line);position:relative;margin-top:var(--s2)}
+.cents i{position:absolute;top:-3px;width:2px;height:9px;background:var(--ink);left:50%;transition:left .08s linear}
+.cents b{position:absolute;top:-8px;left:50%;width:1px;height:19px;background:var(--line)}
+
+/* 레벨 */
+.lvl{height:2px;background:var(--line);margin-top:var(--s3);overflow:hidden}
+.lvl i{display:block;height:100%;width:0;background:var(--ink);transition:width .06s linear}
+
+/* 건반 */
+.kb{position:relative;height:96px;margin:var(--s4) 0 var(--s1);user-select:none}
+.kb .w{position:absolute;top:0;bottom:0;border:1px solid var(--line);border-right:none;background:#fff}
+.kb .w:last-of-type{border-right:1px solid var(--line)}
+.kb .b{position:absolute;top:0;height:60%;background:var(--ink);z-index:2;border-radius:0 0 2px 2px}
+.kb .band{position:absolute;top:0;bottom:0;background:rgba(27,25,23,.10);z-index:3;pointer-events:none}
+.kb .cur{position:absolute;top:-8px;width:2px;height:112px;background:#C0392B;z-index:4;transition:left .08s linear}
+.kbx{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.1em;color:var(--ink-3);margin-bottom:var(--s4)}
+
+/* 결과 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3) var(--s4);margin:var(--s3) 0}
+.f{border-top:1px solid var(--line);padding-top:var(--s1)}
+.f dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.f dd{margin:0;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
+.f dd small{font-size:13px;color:var(--ink-3)}
+
+.msg{font-size:13px;line-height:1.5;color:var(--ink-2);margin-top:var(--s3)}
+.warn{border-left:2px solid #C0392B;padding-left:var(--s2);color:var(--ink-2);font-size:13px;line-height:1.5}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.6}
+code{font:12px ui-monospace,monospace;background:rgba(27,25,23,.06);padding:1px 5px;border-radius:3px}
+</style>
+
+<main>
+  <p class="eyebrow">ieum · step 01</p>
+  <h1>목소리가 닿는 데까지<br>천천히 불러 주세요</h1>
+  <p class="lead">낮은 음부터 편하게 시작해서, 더 내려가지 않을 때까지 내려갔다가 다시 올라갑니다. 무리해서 소리를 짜내지 않아도 됩니다. 재는 동안 가장 낮았던 음과 가장 높았던 음만 남습니다.</p>
+
+  <div class="row">
+    <button id="go">마이크 켜고 시작</button>
+    <button id="reset" disabled>다시 재기</button>
+    <button id="selftest">마이크 없이 검사</button>
+  </div>
+  <div id="err" style="margin-top:var(--s3)"></div>
+
+  <hr>
+
+  <div class="now">
+    <div>
+      <div class="eyebrow" style="margin:0 0 6px">지금 내는 음</div>
+      <div class="note" id="note">—</div>
+    </div>
+    <div class="hz"><span id="hz">0.0</span> Hz<br><span id="conf" style="font-size:11px">—</span></div>
+  </div>
+  <div class="cents"><b></b><i id="cents"></i></div>
+  <div class="lvl"><i id="lvl"></i></div>
+
+  <div class="kb" id="kb"></div>
+  <div class="kbx"><span>C2</span><span>C3</span><span>C4 가온다</span><span>C5</span><span>C6</span></div>
+
+  <dl class="grid2">
+    <div class="f"><dt>가장 낮은 음</dt><dd id="lo">—<small id="loHz"></small></dd></div>
+    <div class="f"><dt>가장 높은 음</dt><dd id="hi">—<small id="hiHz"></small></dd></div>
+    <div class="f"><dt>넓이</dt><dd id="span">—</dd></div>
+    <div class="f"><dt>가까운 성부</dt><dd id="part">—</dd></div>
+  </dl>
+
+  <p class="hand" id="hand"></p>
+  <div class="msg" id="msg"></div>
+
+  <hr>
+  <p class="tiny">
+    브라우저 안에서만 계산합니다. 목소리는 서버로 올라가지 않고 저장되지도 않습니다.<br>
+    성부 구간은 통용되는 대략적인 범위(베이스 E2–E4, 바리톤 G2–G4, 테너 C3–C5, 알토 F3–F5, 메조 A3–A5, 소프라노 C4–C6)에 겹치는 정도로 고른 것입니다. 정확한 분류는 음색과 통과음(passaggio)까지 봐야 합니다.
+  </p>
+</main>
+
+<script>
+const NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const KO={'C':'도','C#':'도#','D':'레','D#':'레#','E':'미','F':'파','F#':'파#','G':'솔','G#':'솔#','A':'라','A#':'라#','B':'시'};
+const hzToMidi = f => 69 + 12*Math.log2(f/440);
+const midiToHz = m => 440*Math.pow(2,(m-69)/12);
+const midiName = m => NOTE_NAMES[((Math.round(m)%12)+12)%12] + (Math.floor(Math.round(m)/12)-1);
+
+const LOW=36, HIGH=84;                      // C2 ~ C6
+const $ = id => document.getElementById(id);
+
+/* ---------- 건반 그리기 (데이터로 생성) ---------- */
+const kb=$('kb');
+const whites=[]; for(let m=LOW;m<=HIGH;m++){ if(![1,3,6,8,10].includes(((m%12)+12)%12)) whites.push(m); }
+const wW=100/whites.length;
+whites.forEach((m,i)=>{
+  const d=document.createElement('div'); d.className='w';
+  d.style.left=(i*wW)+'%'; d.style.width=wW+'%'; kb.appendChild(d);
+});
+for(let m=LOW;m<=HIGH;m++){
+  const pc=((m%12)+12)%12;
+  if(![1,3,6,8,10].includes(pc)) continue;
+  const leftWhite=whites.filter(w=>w<m).length;         // 앞에 있는 흰건반 수
+  const d=document.createElement('div'); d.className='b';
+  d.style.left=(leftWhite*wW - wW*0.30)+'%'; d.style.width=(wW*0.60)+'%';
+  kb.appendChild(d);
+}
+const band=document.createElement('div'); band.className='band'; band.style.display='none'; kb.appendChild(band);
+const cur=document.createElement('div'); cur.className='cur'; cur.style.display='none'; kb.appendChild(cur);
+// midi → 건반 위 x(%)
+function midiToX(m){
+  const mm=Math.max(LOW,Math.min(HIGH,m));
+  const below=whites.filter(w=>w<=mm).length;
+  const pc=((Math.round(mm)%12)+12)%12;
+  const isBlack=[1,3,6,8,10].includes(pc);
+  return (below - (isBlack?0.5:0.5)) * wW;
+}
+
+/* ---------- 피치 검출 ---------- */
+function detectPitch(buf, sr){
+  let size=buf.length, rms=0;
+  for(let i=0;i<size;i++) rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/size);
+  if(rms<0.012) return [-1,0,rms];                      // 노이즈 게이트
+  let r1=0,r2=size-1;const thres=0.2;
+  for(let i=0;i<size/2;i++) if(Math.abs(buf[i])<thres){r1=i;break;}
+  for(let i=1;i<size/2;i++) if(Math.abs(buf[size-i])<thres){r2=size-i;break;}
+  buf=buf.slice(r1,r2); size=buf.length;
+  if(size<512) return [-1,0,rms];
+  const c=new Float32Array(size);
+  for(let i=0;i<size;i++){let s=0; for(let j=0;j<size-i;j++) s+=buf[j]*buf[j+i]; c[i]=s;}
+  let d=0; while(d<size-1 && c[d]>c[d+1]) d++;
+  let maxval=-1,maxpos=-1;
+  for(let i=d;i<size;i++) if(c[i]>maxval){maxval=c[i];maxpos=i;}
+  if(maxpos<=0) return [-1,0,rms];
+  let T0=maxpos;
+  const x1=c[T0-1],x2=c[T0],x3=c[T0+1];
+  const a=(x1+x3-2*x2)/2, b=(x3-x1)/2;
+  if(a) T0=T0-b/(2*a);
+  const clarity = c[0]>0 ? maxval/c[0] : 0;             // 0~1, 주기성이 뚜렷할수록 큼
+  return [sr/T0, clarity, rms];
+}
+
+/* ---------- 상태 ---------- */
+let ac, analyser, stream, raf, buf;
+let hist=[];                 // 최근 검출값 (중앙값 필터)
+let stable=[];               // 안정 판정용
+let lo=null, hi=null;
+let running=false;
+
+const PARTS=[
+  ['베이스',      40,64],   // E2–E4
+  ['바리톤',      43,67],   // G2–G4
+  ['테너',        48,72],   // C3–C5
+  ['알토',        53,77],   // F3–F5
+  ['메조소프라노',57,81],   // A3–A5
+  ['소프라노',    60,84],   // C4–C6
+];
+function bestPart(a,b){
+  let best=null,bs=-1;
+  for(const [n,s,e] of PARTS){
+    const ov=Math.max(0, Math.min(b,e)-Math.max(a,s));
+    const sc = ov / Math.max(1,(b-a));
+    if(sc>bs){bs=sc; best=n;}
+  }
+  return [best, bs];
+}
+
+function median(arr){const a=[...arr].sort((x,y)=>x-y);return a[Math.floor(a.length/2)];}
+
+function render(hz, clarity, rms){
+  $('lvl').style.width=Math.min(100, rms*420)+'%';
+  if(hz<=0 || clarity<0.55 || hz<60 || hz>1200){
+    $('note').textContent='—'; $('hz').textContent='0.0'; $('conf').textContent='—';
+    cur.style.display='none'; stable=[]; return;
+  }
+  hist.push(hz); if(hist.length>7) hist.shift();
+  const f=median(hist);
+  const m=hzToMidi(f);
+  const near=Math.round(m);
+  const cents=Math.round((m-near)*100);
+
+  $('note').innerHTML = midiName(near)+' <small>'+KO[NOTE_NAMES[((near%12)+12)%12]]+'</small>';
+  $('hz').textContent=f.toFixed(1);
+  $('conf').textContent='선명도 '+(clarity*100).toFixed(0)+'%';
+  $('cents').style.left='calc(50% + '+(cents/50*50)+'%)';
+  cur.style.display='block'; cur.style.left=midiToX(m)+'%';
+
+  // 4프레임 연속 같은 음이면 기록
+  stable.push(near); if(stable.length>4) stable.shift();
+  if(stable.length===4 && stable.every(v=>v===near)){
+    if(near>=LOW-6 && near<=HIGH+6){
+      if(lo===null||near<lo) lo=near;
+      if(hi===null||near>hi) hi=near;
+      updateResult();
+    }
+  }
+}
+
+function updateResult(){
+  if(lo===null||hi===null) return;
+  $('lo').innerHTML=midiName(lo)+' <small>'+midiToHz(lo).toFixed(1)+' Hz</small>';
+  $('hi').innerHTML=midiName(hi)+' <small>'+midiToHz(hi).toFixed(1)+' Hz</small>';
+  const semi=hi-lo;
+  $('span').innerHTML=semi+' 반음 <small>'+(semi/12).toFixed(1)+' 옥타브</small>';
+  const [p,score]=bestPart(lo,hi);
+  $('part').innerHTML = semi>=7 ? p+' <small>겹침 '+(score*100).toFixed(0)+'%</small>' : '<small>더 불러 주세요</small>';
+  band.style.display='block';
+  const x1=midiToX(lo), x2=midiToX(hi);
+  band.style.left=Math.min(x1,x2)+'%'; band.style.width=Math.abs(x2-x1)+'%';
+  if(semi>=7){
+    $('hand').textContent = midiName(lo)+'부터 '+midiName(hi)+'까지, '+(semi/12).toFixed(1)+'옥타브를 냈어요';
+  }
+}
+
+function loop(){
+  analyser.getFloatTimeDomainData(buf);
+  const [hz,clarity,rms]=detectPitch(buf, ac.sampleRate);
+  render(hz,clarity,rms);
+  raf=requestAnimationFrame(loop);
+}
+
+$('go').onclick=async ()=>{
+  $('err').innerHTML='';
+  if(!window.isSecureContext || !navigator.mediaDevices){
+    $('err').innerHTML='<div class="warn"><b>마이크를 열 수 없는 환경입니다.</b><br>'
+      +'현재 <code>'+location.protocol+'</code> 에서 열려 있습니다. 마이크는 <code>https://</code> 또는 파일을 브라우저로 직접 연 <code>file://</code> 에서만 켜집니다.<br>'
+      +'이 파일을 바탕화면에 두고 더블클릭해서 여시거나, 배포 후 https 주소로 여세요. 그 전에는 아래 <b>마이크 없이 검사</b>로 계산이 맞는지만 확인할 수 있습니다.</div>';
+    return;
+  }
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){
+    $('err').innerHTML='<div class="warn"><b>마이크 권한이 거부되었습니다.</b><br>주소창 왼쪽 자물쇠에서 마이크를 허용한 뒤 다시 눌러 주세요. ('+e.name+')</div>';
+    return;
+  }
+  ac=new (window.AudioContext||window.webkitAudioContext)();
+  const src=ac.createMediaStreamSource(stream);
+  analyser=ac.createAnalyser(); analyser.fftSize=4096;
+  buf=new Float32Array(analyser.fftSize);
+  src.connect(analyser);
+  running=true; $('go').disabled=true; $('reset').disabled=false;
+  $('msg').textContent='듣고 있습니다. 편한 음에서 시작해 천천히 내려갔다가 올라가 보세요.';
+  loop();
+};
+
+$('reset').onclick=()=>{
+  lo=hi=null; hist=[]; stable=[];
+  ['lo','hi','span','part'].forEach(id=>$(id).textContent='—');
+  $('hand').textContent=''; band.style.display='none';
+};
+
+$('selftest').onclick=async ()=>{
+  const SR=44100, cases=[['E2',82.41],['C3',130.81],['A3',220],['C4',261.63],['A4',440],['C5',523.25],['A5',880]];
+  let out=[], pass=0;
+  for(const [n,hz] of cases){
+    const N=Math.floor(SR*0.2);
+    const ctx=new OfflineAudioContext(1,N,SR);
+    const b=ctx.createBuffer(1,N,SR), d=b.getChannelData(0);
+    for(let i=0;i<N;i++){const s=i/SR;
+      d[i]=0.6*Math.sin(2*Math.PI*hz*s)+0.25*Math.sin(2*Math.PI*hz*2*s)+0.12*Math.sin(2*Math.PI*hz*3*s)+(Math.random()-0.5)*0.02;}
+    const sr0=ctx.createBufferSource(); sr0.buffer=b; sr0.connect(ctx.destination); sr0.start();
+    const r=await ctx.startRendering();
+    const [got]=detectPitch(r.getChannelData(0),SR);
+    const ok=got>0 && Math.abs(got-hz)/hz<0.01; if(ok)pass++;
+    out.push(n+' '+(ok?'✓':'✗')+' '+(got>0?got.toFixed(1):'실패')+'Hz');
+  }
+  $('msg').innerHTML='<b>계산 검사 '+pass+'/'+cases.length+' 통과</b> — '+out.join(' · ')
+    +'<br>마이크 없이 검출 알고리즘만 돌린 결과입니다. 실제 목소리는 이보다 흔들립니다.';
+  window.__SELFTEST={pass,total:cases.length};
+};
+
+// 마이크 없이 결과 화면을 확인하는 용도 (콘솔에서 __demo('E2','E4') 처럼 호출)
+window.__demo=(a,b)=>{
+  const toM = s => {
+    const m=s.match(/^([A-G]#?)(-?\d)$/); if(!m) return null;
+    return NOTE_NAMES.indexOf(m[1]) + (parseInt(m[2],10)+1)*12;
+  };
+  lo=typeof a==='string'?toM(a):a; hi=typeof b==='string'?toM(b):b;
+  updateResult();
+  return {lo,hi,lo_name:midiName(lo),hi_name:midiName(hi)};
+};
+
+// 환경 안내
+if(!window.isSecureContext){
+  $('err').innerHTML='<div class="warn">지금 <code>'+location.protocol+'</code> 로 열려 있어 마이크가 잠겨 있습니다. 파일을 브라우저로 직접 열면(<code>file://</code>) 켜집니다.</div>';
+}
+</script>

@@ -1,0 +1,439 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 곡과 가사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EFE8; --ink:#1B1917; --ink-2:#6B635B; --ink-3:#A79E93; --line:#D9D2C6;
+  --card:#EDE7DA; --p1:#2C5282; --p2:#C05621; --p3:#2F6B4F; --p4:#6B4A8A;
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:420px;margin:0 auto;padding:var(--s6) var(--s2) var(--s8)}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:28px;line-height:1.14;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:var(--s6) 0 var(--s2)}
+.lead{font-size:15px;color:var(--ink-2);margin:0 0 var(--s3)}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.7}
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+button{font:inherit;font-size:13px;border:1px solid var(--ink);background:transparent;color:var(--ink);
+  border-radius:999px;padding:9px 18px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.28;cursor:default}
+button.on{background:var(--ink);color:var(--paper)}
+button.mini{font-size:12px;padding:6px 14px}
+.row{display:flex;gap:var(--s1);flex-wrap:wrap;align-items:center}
+
+/* 노래방 가사 */
+.stage{background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:var(--s3) var(--s2);min-height:196px;display:flex;flex-direction:column;
+  justify-content:center;gap:var(--s1);overflow:hidden}
+.sect{font-size:11px;letter-spacing:.12em;color:var(--ink-3);text-align:center;margin-bottom:var(--s1)}
+.ly{font-size:26px;line-height:1.35;text-align:center;letter-spacing:.02em;
+  color:var(--ink-3);transition:color .2s}
+.ly.cur{color:var(--ink)}
+.ly.next{font-size:19px;color:#C0B8AC}
+.ly b{font-weight:400;position:relative}
+.ly b.hit{color:var(--p1)}
+.ly.p2 b.hit{color:var(--p2)}
+.bar{height:2px;background:var(--line);margin:var(--s2) 0 0;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);width:0}
+
+/* 파트 */
+.parts{display:flex;flex-direction:column;gap:6px;margin-top:var(--s2)}
+.part{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2);
+  border:1px solid var(--line);border-radius:3px;padding:8px 10px;cursor:pointer;
+  background:transparent;text-align:left;width:100%}
+.part:hover{background:transparent;color:var(--ink-2)}
+.part.off{opacity:.35}
+.part .sw{width:10px;height:10px;border-radius:2px;flex:none}
+.part .nm{flex:1;font-weight:600;color:var(--ink)}
+.part .rg{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11px}
+
+svg.roll{width:100%;height:auto;display:block;margin-top:var(--s2);
+  border:1px solid var(--line);border-radius:3px;background:var(--card)}
+
+table.t{border-collapse:collapse;width:100%;font-size:13px;margin:var(--s2) 0}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--ink-3);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.ok{color:#2F6B4F}.ng{color:#9B2C2C}
+code{font-size:12px;background:#E6E0D3;padding:1px 5px;border-radius:2px}
+</style>
+
+<main>
+<p class="eyebrow">이음 · 06</p>
+<h1>곡과 가사</h1>
+<p class="lead">파트가 갈려 있고 가사에 시각이 붙은 곡입니다. 녹음·믹싱·노래방이 전부 이걸 받아서 돕니다.</p>
+
+<h2>곡</h2>
+<div class="row" id="songs"></div>
+
+<div class="stage" id="stage"></div>
+<div class="bar"><i id="prog"></i></div>
+
+<div class="parts" id="parts"></div>
+
+<div class="row" style="margin-top:var(--s3)">
+  <button id="play">듣기</button>
+  <button id="stop" class="mini" disabled>멈춤</button>
+  <button id="dl" class="mini">MIDI 내려받기</button>
+</div>
+
+<h2>피아노롤</h2>
+<svg class="roll" id="roll"></svg>
+
+<hr>
+<h2>검사</h2>
+<p class="tiny">이 페이지를 열 때 자동으로 채워집니다. 소리를 안 내고 값만 확인합니다.</p>
+<table class="t" id="tt"><tr><th>항목</th><th>결과</th><th>판정</th></tr></table>
+
+<hr>
+<p class="tiny">
+<b>이 곡은 제가 찍은 것입니다.</b> 사람들이 부르고 싶어 할 곡인지는 제가 보장하지 못합니다.
+기능이 도는지 보여주기 위한 자리입니다. 진짜 곡이 생기면 <code>song.js</code> 의
+<code>MELODY</code> 만 갈아끼우면 되고, 나머지 코드는 손댈 게 없습니다.<br><br>
+
+<b>가사는 MIDI 안에 들어 있습니다.</b> MIDI 에는 음표 말고 글자를 넣는 자리가 따로 있습니다
+(<code>0xFF 0x05</code>). 음표마다 글자를 하나씩 붙여 두면 노래방처럼 흐릅니다.
+한글은 UTF-8 로 넣습니다. 규격 문서는 ASCII 를 말하지만 요즘 프로그램은 UTF-8 을 읽습니다.
+내려받은 파일을 다시 읽어도 글자가 그대로인지 아래 검사에서 확인합니다.<br><br>
+
+<b>음역을 일부러 좁게 잡았습니다.</b> CPDL 합창 악보는 베이스 최저음이 G2 라 아마추어가
+대부분 못 부릅니다. 이 곡은 파트마다 10~12반음입니다.<br><br>
+
+<b>화성은 계산으로 붙였습니다.</b> 가락 한 줄만 있으면 가단조 음계 위에서 3도·5도를 내려
+파트를 만듭니다. 나중에 다른 데서 가락을 받아 와도 같은 함수로 파트를 만들 수 있습니다.
+</p>
+</main>
+
+<script src="../midi.js"></script>
+<script src="../song.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+if (typeof Midi === 'undefined' || typeof SongData === 'undefined') {
+  $('stage').innerHTML = '<p class="tiny"><b>엔진을 못 읽었습니다.</b><br>'
+    + 'midi.js · song.js 가 윗 폴더에 있어야 합니다. 그래도 안 되면 그 폴더에서<br>'
+    + '<code>python -m http.server 8787</code> 를 실행하고<br>'
+    + 'http://localhost:8787/곡과가사.html 로 여세요.</p>';
+  throw new Error('엔진 없음');
+}
+
+const COLORS = ['var(--p1)','var(--p2)','var(--p3)','var(--p4)'];
+let SONGS = SongData.songs(480);
+let song = SONGS[0];
+let muted = {};                 // 파트 끄기
+let ctx = null, nodes = [], t0 = 0, raf = 0, playing = false;
+
+const secPerTick = s => 60 / (s.bpm * s.ppq);
+const songEnd = s => Math.max(...s.tracks.map(t =>
+  Math.max(...t.notes.map(n => n.tick + n.dur))));
+
+/* ── 파트 목록 ─────────────────────────────── */
+function renderParts(){
+  $('parts').innerHTML = song.tracks.map((t, i) => {
+    const r = SongData.partRange(t);
+    return '<button class="part' + (muted[i] ? ' off' : '') + '" data-i="' + i + '">'
+      + '<span class="sw" style="background:' + COLORS[i % 4] + '"></span>'
+      + '<span class="nm">' + t.name + '</span>'
+      + '<span class="rg">' + noteName(r.lo) + '~' + noteName(r.hi)
+      + ' · ' + (r.hi - r.lo) + '반음 · ' + t.notes.length + '음</span>'
+      + '</button>';
+  }).join('');
+}
+const NN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function noteName(m){ return NN[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1); }
+
+/* ── 가사 ──────────────────────────────────
+   모든 파트의 가사를 한 줄로 모아 시각 순으로 놓는다. */
+function buildRows(){
+  const sp = secPerTick(song);
+  const rows = [];
+  song.tracks.forEach((t, ti) => {
+    (t.rows || []).forEach(r => {
+      if (rows.some(x => x.from === r.from && x.text === r.text)) return;  // 후렴은 겹친다
+      rows.push({ from: r.from, to: r.to, text: r.text, chord: r.chord, track: ti,
+                  t0: r.from * sp, t1: r.to * sp,
+                  syl: t.lyrics.filter(l => l.tick >= r.from && l.tick < r.to)
+                        .map(l => ({ text: l.text, t: l.tick * sp })) });
+    });
+  });
+  rows.sort((a, b) => a.from - b.from);
+  return rows;
+}
+let ROWS = [];
+
+function sectionAt(tick){
+  return (song.sections || []).find(s => tick >= s.from && tick < s.to) || null;
+}
+
+function drawLyrics(time){
+  const sp = secPerTick(song);
+  const tick = time / sp;
+  // 줄이 끝나도 다음 줄이 실제로 시작할 때까지는 그대로 둔다.
+  // 끝나자마자 지우면 쉬는 동안 화면이 빈다.
+  let i = 0;
+  for (let k = 0; k < ROWS.length; k++) if (time >= ROWS[k].t0 - 0.01) i = k;
+  const cur = ROWS[i], nxt = ROWS[i + 1];
+  const sec = sectionAt(cur ? cur.from : 0);
+
+  const paint = (r, cls) => {
+    if (!r) return '';
+    const body = r.syl.map(s =>
+      '<b class="' + (time >= s.t ? 'hit' : '') + '">' + s.text + '</b>').join('');
+    return '<div class="ly ' + cls + (r.track === 1 ? ' p2' : '') + '">' + body + '</div>';
+  };
+  $('stage').innerHTML =
+    (sec ? '<p class="sect">' + sec.name + '</p>' : '')
+    + paint(cur, 'cur') + paint(nxt, 'next');
+  $('prog').style.width = Math.min(100, time / (songEnd(song) * sp) * 100) + '%';
+}
+
+/* ── 소리 ──────────────────────────────────
+   파트마다 배음을 다르게 줘서 귀로 갈리게 한다. */
+function play(){
+  stop();
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const sp = secPerTick(song);
+  const master = ctx.createGain();
+  master.gain.value = 0.9; master.connect(ctx.destination);
+
+  song.tracks.forEach((t, ti) => {
+    if (muted[ti]) return;
+    const bus = ctx.createGain();
+    bus.gain.value = 0.34; bus.connect(master);
+    t.notes.forEach(n => {
+      const st = ctx.currentTime + 0.12 + n.tick * sp;
+      const dur = Math.max(0.08, n.dur * sp);
+      const hz = 440 * Math.pow(2, (n.midi - 69) / 12);
+      [1, 2, 3].forEach((h, k) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = hz * h;
+        const amp = [0.6, 0.22, 0.1][k] * (ti % 2 ? 0.9 : 1);
+        g.gain.setValueAtTime(0, st);
+        g.gain.linearRampToValueAtTime(amp, st + 0.02);
+        g.gain.setValueAtTime(amp, st + dur * 0.7);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+        o.connect(g); g.connect(bus);
+        o.start(st); o.stop(st + dur + 0.05);
+        nodes.push(o);
+      });
+    });
+  });
+
+  t0 = ctx.currentTime + 0.12; playing = true;
+  $('play').disabled = true; $('stop').disabled = false;
+  const total = songEnd(song) * sp;
+  (function tick(){
+    if (!playing) return;
+    const time = ctx.currentTime - t0;
+    drawLyrics(Math.max(0, time));
+    if (time > total + 0.4){ stop(); return; }
+    raf = requestAnimationFrame(tick);
+  })();
+}
+function stop(){
+  playing = false;
+  cancelAnimationFrame(raf);
+  nodes.forEach(o => { try { o.stop(); } catch (_) {} });
+  nodes = [];
+  if (ctx){ try { ctx.close(); } catch (_) {} ctx = null; }
+  $('play').disabled = false; $('stop').disabled = true;
+  drawLyrics(0);
+}
+
+/* ── 피아노롤 ─────────────────────────────── */
+function drawRoll(){
+  const all = song.tracks.flatMap(t => t.notes);
+  const lo = Math.min(...all.map(n => n.midi)) - 1;
+  const hi = Math.max(...all.map(n => n.midi)) + 1;
+  const end = songEnd(song);
+  const W = 1000, H = Math.max(140, (hi - lo + 1) * 7);
+  const x = t => t / end * (W - 8) + 4;
+  const y = m => (hi - m) / (hi - lo) * (H - 14) + 7;
+
+  let s = '';
+  for (let m = lo; m <= hi; m++)
+    if (m % 12 === 0) s += '<line x1="0" y1="' + y(m).toFixed(1) + '" x2="' + W
+      + '" y2="' + y(m).toFixed(1) + '" stroke="#D9D2C6" stroke-width="1"/>';
+  (song.sections || []).forEach(sec => {
+    s += '<line x1="' + x(sec.from).toFixed(1) + '" y1="0" x2="' + x(sec.from).toFixed(1)
+      + '" y2="' + H + '" stroke="#C0B8AC" stroke-width="1" stroke-dasharray="3 3"/>';
+  });
+  song.tracks.forEach((t, ti) => {
+    if (muted[ti]) return;
+    t.notes.forEach(n => {
+      s += '<rect x="' + x(n.tick).toFixed(1) + '" y="' + (y(n.midi) - 2.5).toFixed(1)
+        + '" width="' + Math.max(2, x(n.tick + n.dur) - x(n.tick)).toFixed(1)
+        + '" height="5" rx="1.5" fill="' + COLORS[ti % 4] + '" opacity=".85"/>';
+    });
+  });
+  $('roll').setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  $('roll').innerHTML = s;
+}
+
+/* ── 내려받기 ─────────────────────────────── */
+function download(){
+  const bytes = Midi.write(song);
+  const blob = new Blob([bytes], { type: 'audio/midi' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = song.title + '.mid';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ── 다시 그리기 ──────────────────────────── */
+function rebuild(){
+  muted = {};
+  ROWS = buildRows();
+  $('songs').innerHTML = SONGS.map(s =>
+    '<button class="mini' + (s.title === song.title ? ' on' : '') + '" data-t="' + s.title + '">'
+    + s.title + ' · ' + s.tracks.length + '파트 · ' + s.bpm + 'BPM</button>').join('');
+  renderParts(); drawRoll(); drawLyrics(0);
+}
+$('songs').onclick = e => {
+  const b = e.target.closest('button[data-t]');
+  if (!b) return;
+  stop(); song = SONGS.find(s => s.title === b.dataset.t); rebuild();
+};
+$('parts').onclick = e => {
+  const b = e.target.closest('button[data-i]');
+  if (!b) return;
+  const i = +b.dataset.i;
+  muted[i] = !muted[i];
+  renderParts(); drawRoll();
+  if (playing){ stop(); play(); }
+};
+$('play').onclick = play;
+$('stop').onclick = stop;
+$('dl').onclick = download;
+rebuild();
+
+/* ── 검사 ──────────────────────────────────
+   소리는 안 낸다. 값만 본다. */
+window.__T = () => {
+  const t = $('tt');
+  t.innerHTML = '<tr><th>항목</th><th>결과</th><th>판정</th></tr>';
+  const add = (a, b, ok) => {
+    const r = document.createElement('tr');
+    r.innerHTML = '<td>' + a + '</td><td>' + b + '</td>'
+                + '<td class="' + (ok ? 'ok' : 'ng') + '">' + (ok ? '통과' : '실패') + '</td>';
+    t.appendChild(r);
+  };
+  const bam = SongData.buildBam(480), maju = SongData.buildMaju(480);
+
+  /* 파트 */
+  add('파트가 갈려 있음',
+      bam.title + ' ' + bam.tracks.length + '파트 · ' + maju.title + ' ' + maju.tracks.length + '파트',
+      bam.tracks.length === 2 && maju.tracks.length === 4);
+
+  const rs = maju.tracks.map(tr => SongData.partRange(tr));
+  add('네 파트가 서로 다른 자리에 있음',
+      rs.map(r => r.name + ' ' + noteName(r.lo) + '~' + noteName(r.hi)).join(' · '),
+      rs.every((r, i) => i === 0 || rs[i-1].lo > r.lo));
+
+  add('아마추어가 부를 만한 폭',
+      bam.tracks.concat(maju.tracks).map(tr => {
+        const r = SongData.partRange(tr); return r.name + ' ' + (r.hi - r.lo); }).join('반음 · ') + '반음',
+      bam.tracks.concat(maju.tracks).every(tr => {
+        const r = SongData.partRange(tr); return r.hi - r.lo <= 14; }));
+
+  /* 가사 */
+  const nL = bam.tracks[0].lyrics.length, nN = bam.tracks[0].notes.length;
+  add('음표마다 글자가 하나씩', '음표 ' + nN + ' · 글자 ' + nL, nN === nL);
+
+  /* MIDI 왕복 */
+  const bytes = Midi.write(bam);
+  const back = Midi.read(bytes);
+  add('MIDI 로 쓰고 다시 읽음',
+      bytes.length + '바이트 → 트랙 ' + back.tracks.length + ' · BPM ' + back.bpm,
+      back.tracks.length === bam.tracks.length && Math.abs(back.bpm - bam.bpm) < 0.5);
+
+  const a0 = bam.tracks[0].notes, b0 = back.tracks[0].notes;
+  add('음표가 하나도 안 틀림',
+      a0.length + '개 중 어긋남 ' + a0.filter((n, i) =>
+        !b0[i] || b0[i].midi !== n.midi || b0[i].tick !== n.tick || b0[i].dur !== n.dur).length + '개',
+      a0.length === b0.length && a0.every((n, i) =>
+        b0[i].midi === n.midi && b0[i].tick === n.tick && b0[i].dur === n.dur));
+
+  const la = bam.tracks[0].lyrics.map(l => l.text).join('');
+  const lb = back.tracks[0].lyrics.map(l => l.text).join('');
+  add('한글 가사가 깨지지 않음', lb.slice(0, 16) + '…', la === lb);
+
+  add('제목도 한글 그대로', '[' + back.title + ']', back.title === bam.title);
+
+  /* 타임코드 */
+  const sync = Midi.syncLyrics(back.tracks[0], back.ppq, back.bpm);
+  add('글자마다 시각이 붙음',
+      sync.slice(0, 4).map(s => s.text + ' ' + s.time.toFixed(2) + 's').join(' / '),
+      sync.length === nL && sync.every((s, i) => i === 0 || s.time >= sync[i-1].time));
+
+  const sp = 60 / (bam.bpm * bam.ppq);
+  add('시각이 빠르기와 맞음',
+      '8분음표 ' + (bam.ppq * 0.5 * sp).toFixed(3) + '초 (72BPM 이론값 0.417초)',
+      Math.abs(bam.ppq * 0.5 * sp - 0.4167) < 0.005);
+
+  /* 화성 */
+  const c = SongData.layout(SongData.RAW.MAJU.chorus, 480, 0);
+  const third = SongData.harmonize(c.notes, -2, 0);
+  add('3도 아래로 내려도 조성을 안 벗어남',
+      c.notes.slice(0,4).map((n,i) => noteName(n.midi) + '→' + noteName(third[i].midi)).join(' · '),
+      third.every(n => [9,11,0,2,4,5,7].indexOf(((n.midi % 12) + 12) % 12) >= 0));
+
+  add('화성이 가락보다 항상 아래',
+      '어긋남 ' + third.filter((n, i) => n.midi >= c.notes[i].midi).length + '개',
+      third.every((n, i) => n.midi < c.notes[i].midi));
+
+  /* 매칭 엔진이 받는 모양 */
+  const pr = SongData.partRange(bam.tracks[1]);
+  add('매칭 엔진이 쓰는 모양으로 나옴',
+      Object.keys(pr).join(' · '),
+      ['name','lo','hi','lo90','hi90','highRatio'].every(k => pr[k] != null));
+
+  /* 화면 */
+  add('가사가 줄 단위로 끊김',
+      ROWS.length + '줄 · 첫 줄 [' + ROWS[0].text + ']',
+      ROWS.length > 0 && ROWS.every(r => r.syl.length > 0));
+
+  add('줄이 단어 중간에서 안 끊김',
+      ROWS.map(r => r.text.trim()).slice(0, 3).join(' / '),
+      ROWS.every(r => !/^[가-힣]/.test(r.text) || r.text.trim().length > 0)
+      && ROWS.every(r => r.text.indexOf('  ') < 0));
+
+  // 글자 강조가 시간에 따라 실제로 늘어나는가
+  const r0 = ROWS[0];
+  const counts = [0, 0.3, 1.0, 2.0, 3.5, 4.5].map(sec => {
+    drawLyrics(r0.t0 + sec);
+    return document.querySelectorAll('.ly.cur b.hit').length;
+  });
+  add('시간이 가면 글자가 하나씩 켜짐',
+      '0/0.3/1/2/3.5/4.5초 → ' + counts.join(' · ') + ' (전체 ' + r0.syl.length + '자)',
+      counts[0] >= 1 && counts.every((c, i) => i === 0 || c >= counts[i-1])
+      && counts[counts.length-1] === r0.syl.length);
+
+  // 줄과 줄 사이 쉬는 동안 화면이 비면 안 된다
+  drawLyrics(ROWS[0].t1 + (ROWS[1].t0 - ROWS[0].t1) / 2);
+  add('줄 사이 쉬는 동안에도 화면이 안 빔',
+      '[' + ($('stage').querySelector('.ly.cur') || {}).textContent + ']',
+      document.querySelectorAll('.ly.cur b.hit').length === ROWS[0].syl.length);
+
+  drawLyrics(0);
+  add('처음으로 돌리면 첫 글자만 켜짐',
+      document.querySelectorAll('.ly.cur b.hit').length + ' / ' + r0.syl.length + '자',
+      document.querySelectorAll('.ly.cur b.hit').length === 1);
+
+  add('360px 폭에서 가로로 안 넘침',
+      '문서 ' + document.documentElement.scrollWidth + 'px / 화면 ' + window.innerWidth + 'px',
+      document.documentElement.scrollWidth <= window.innerWidth + 1);
+
+  drawLyrics(0);
+  return { 곡: SONGS.length, 줄: ROWS.length, 바이트: bytes.length };
+};
+window.addEventListener('load', () => setTimeout(window.__T, 60));
+</script>

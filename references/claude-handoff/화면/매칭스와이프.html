@@ -1,0 +1,940 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 매칭과 탐색</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2EFE8; --ink:#1B1917; --ink-2:#6B635B; --ink-3:#A79E93; --line:#D9D2C6;
+  --card:#EDE7DA; --shell:#2A2724; --tape:#5B4A3A;
+  --me:#2C5282; --you:#C05621; --band:#8A8175;
+  --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:420px;margin:0 auto;padding:var(--s6) var(--s2) var(--s8)}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:28px;line-height:1.14;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:var(--s6) 0 var(--s2)}
+.lead{font-size:15px;color:var(--ink-2);margin:0 0 var(--s3)}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.7}
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+button{font:inherit;font-size:13px;border:1px solid var(--ink);background:transparent;color:var(--ink);
+  border-radius:999px;padding:9px 18px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.28;cursor:default}
+button.on{background:var(--ink);color:var(--paper)}
+button.mini{font-size:12px;padding:6px 14px}
+.row{display:flex;gap:var(--s1);flex-wrap:wrap;align-items:center}
+
+/* ── 카드 더미 ───────────────────────────────── */
+.deck{position:relative;height:430px;margin:var(--s3) 0 var(--s2);touch-action:none;user-select:none}
+.card,.back{position:absolute;inset:0;background:var(--card);border:1px solid var(--line);
+  border-radius:3px;padding:var(--s3) var(--s3) var(--s2)}
+.back{display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .2s;overflow-y:auto}
+.deck.open .back{opacity:1;pointer-events:auto}
+/* 뒷면을 볼 때는 뒤에 겹쳐 둔 다음 사람 카드도 치운다 */
+.deck.open .card.peek{opacity:0}
+.card{z-index:2;box-shadow:0 1px 0 var(--line),0 10px 24px -18px rgba(27,25,23,.5);
+  display:flex;flex-direction:column;cursor:grab;
+  transition:transform .22s cubic-bezier(.22,.61,.36,1),opacity .22s}
+.card.peek{z-index:1;transform:translateY(10px) scale(.97);opacity:.5;box-shadow:none;
+  pointer-events:none;transition:none}
+.card.drag{cursor:grabbing;transition:none}
+
+.hand{font-family:"Nanum Pen Script",cursive;font-size:34px;line-height:1;letter-spacing:.02em}
+.who{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s2)}
+.score{text-align:right;line-height:1}
+.score b{font-size:40px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.score i{font-style:normal;font-size:11px;color:var(--ink-3);display:block;letter-spacing:.1em}
+.vd{font-size:12px;margin:var(--s2) 0 0;padding:4px 10px;border:1px solid var(--line);
+  border-radius:999px;display:inline-block;color:var(--ink-2)}
+.vd.full{border-color:var(--ink);color:var(--ink)}
+.vd.no{border-style:dashed;color:var(--ink-3)}
+.reason{font-size:13px;color:var(--ink-2);margin:var(--s2) 0 0;min-height:36px}
+.rangebox{margin-top:auto;padding-top:var(--s2)}
+svg.rng{width:100%;height:auto;display:block}
+.assign{display:flex;gap:var(--s1);margin-top:var(--s2);flex-wrap:wrap}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink-2)}
+.chip b{font-weight:600;color:var(--ink)}
+.hint{font-size:11px;color:var(--ink-3);text-align:center;margin:0 0 var(--s3);line-height:1.8}
+.sieve{font-size:13px;color:var(--ink-2);margin:0;line-height:1.9}
+.sieve b{color:var(--ink);font-weight:600}
+.sieve s{color:var(--ink-3);text-decoration-color:var(--ink-3)}
+.two{display:flex;align-items:flex-end;gap:var(--s2);justify-content:flex-end}
+.sub{text-align:right;line-height:1.25}
+.sub b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.sub i{font-style:normal;font-size:10px;color:var(--ink-3);display:block;letter-spacing:.08em}
+.why{margin:var(--s2) 0 0;padding:0;list-style:none;min-height:60px}
+.why li{font-size:13px;color:var(--ink-2);padding:3px 0 3px 14px;position:relative}
+.why li:before{content:'';position:absolute;left:2px;top:12px;width:5px;height:5px;
+  border-radius:50%;background:var(--ink-3)}
+.chip.key{border-color:var(--ink);color:var(--ink)}
+.three{display:flex;gap:var(--s2);margin-top:var(--s2);padding-top:var(--s2);
+  border-top:1px solid var(--line)}
+.three span{font-size:11px;color:var(--ink-3);letter-spacing:.06em}
+.three b{display:block;font-size:19px;color:var(--ink);font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;margin-top:2px}
+
+/* 상세(뒷면) */
+.back h3{font-family:"Nanum Pen Script",cursive;font-size:28px;margin:0 0 var(--s2);font-weight:400}
+table.bd{border-collapse:collapse;width:100%;font-size:12px}
+table.bd th,table.bd td{border-bottom:1px solid var(--line);padding:7px 4px;text-align:left}
+table.bd th{color:var(--ink-3);font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+table.bd td.n{text-align:right;font-variant-numeric:tabular-nums}
+
+table.t{border-collapse:collapse;width:100%;font-size:13px;margin:var(--s2) 0}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--ink-3);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.ok{color:#2F6B4F}.ng{color:#9B2C2C}
+/* 검사하는 동안은 전환 효과를 끈다.
+   창이 화면에 안 그려지면 전환이 멈춰 있어서, 켜 둔 채로 재면 환경을 탄다. */
+body.notrans *{transition:none !important;animation:none !important}
+</style>
+
+<main>
+<p class="eyebrow">이음 · 05</p>
+<h1>나와 이 곡을<br>완성할 사람 찾기</h1>
+<p class="lead">열린 듀엣을 고르는 게 아닙니다. 곡을 정해 두고, 그 곡의 빈 파트를 메울 수 있는 사람을 찾습니다.</p>
+
+<h2>곡</h2>
+<div class="row" id="songs"></div>
+
+<h2>거른 결과</h2>
+<p class="sieve" id="sieve"></p>
+
+<div class="deck" id="deck">
+  <div class="back" id="back"></div>
+  <div class="card peek" id="peek"></div>
+  <div class="card" id="card"></div>
+</div>
+<p class="hint" id="hint"></p>
+
+<div class="row">
+  <button id="next" class="mini">다음 사람</button>
+  <button id="prev" class="mini">이전 사람</button>
+  <button id="flip" class="mini">자세히</button>
+  <button id="mode" class="mini">줄 세우기: 닮은 순</button>
+  <button id="span" class="mini">조옮김: ±7반음</button>
+  <button id="reset" class="mini">처음으로</button>
+</div>
+
+<hr>
+<h2>검사</h2>
+<p class="tiny">아래 표는 이 페이지를 열 때 자동으로 채워집니다. 엔진(match.js)과 화면을 따로 검사합니다.</p>
+<table class="t" id="tt"><tr><th>항목</th><th>결과</th><th>판정</th></tr></table>
+
+<hr>
+<p class="tiny">
+<b>1단계 · 거름 (예 / 아니오)</b><br>
+맡을 파트의 음에 하나라도 못 닿으면 탈락입니다. 점수를 매기지 않습니다.
+음 번호는 MIDI 번호입니다. 60 = 가운데 도(C4), 1 차이 = 반음.
+파트 음역(소프라노·알토·테너·베이스)은 CPDL 악보 <b>92~99곡</b>에서 실제로 뽑은 값입니다.<br>
+<b>조옮김</b>은 곡 전체를 반음 단위로 옮겨 봅니다. 원조성에서 가까운 쪽부터, ±7반음까지.
+다만 그 사람의 음역폭 자체가 파트보다 좁으면 어떤 조성으로도 안 됩니다.
+올리는 쪽을 먼저 보는 건 제가 정한 순서입니다.<br><br>
+
+<b>2단계 · 궁합 = 역할 35 + 음색 25 + 취향 40</b><br>
+이 세 무게는 <b>제가 정한 설계값</b>입니다. 실제 반응 데이터가 없습니다.<br><br>
+
+<b>역할</b> — 사용자가 세운 가설입니다. 목소리마다 어울리는 자리가 있고, 그 조합이 궁합을 가른다는
+생각입니다. 받침(낮고 밀도 높음) · 윗화음(가볍고 호흡이 김) · 중간화음(균형 잡힌 중음) ·
+메인(선명한 중음). 어택·잔향·유지 길이는 파형에서 실제로 잽니다.
+다만 <b>어느 값을 어떻게 섞어 역할을 매기는지는 제가 짠 것이고 실측이 아닙니다.</b>
+사람이 매긴 역할 라벨이 한 건도 없어서 맞는지 확인할 방법이 아직 없습니다.<br><br>
+
+<b>음색</b> — <b>결 차이</b>로 잽니다. 기본음 대비 배음이 깔리는 모양이라 음 높이가 지워집니다.
+실측 — 결은 같고 음높이만 다른 쌍 <b>178개</b>에서 중앙값 0.030 · 95% 0.038 · 최대 0.090.<br>
+<b>가림</b>은 줄 세우기에 안 씁니다. 음역과 음색을 구분하지 못합니다.
+실측 — 1옥타브 차이 <b>0.481</b>, 같은 높이에 결만 다름 <b>0.480</b>. 두 값이 같습니다.<br>
+점수 눈금은 목소리 <b>123개</b>로 만든 쌍 <b>7,503개</b>의 10분위에 맞췄습니다.
+결 차이는 이론상 1.0 까지 가능하지만 실제로는 <b>0.558</b> 을 안 넘어서, 그냥 나누면
+아무도 높은 점수를 못 받습니다.<br>
+방향은 <b>닮을수록 위</b>가 기본입니다. 듀엣 보이스매칭 연구가 근거입니다 —
+가수 14명, 지휘자 평가자 48명, 네 값(SPR·비브라토 속도·폭·감소)이 블렌드 인식의 <b>79%</b>를
+설명했고 닮은 목소리끼리가 더 잘 섞였습니다. <b>갈린 순</b>에는 근거가 없습니다.<br><br>
+
+<b>취향</b> — 소리를 안 보고 앱에 남긴 것만 봅니다. 장르 분포·저장한 곡·함께 부를 수 있는 곡·
+원하는 편성·맡고 싶은 자리. 추천 문구의 말투는 <b>기존 후보 데이터에 있던 것을 그대로 따랐습니다.</b>
+항목별 무게와 문구가 나오는 기준값은 제가 정했습니다.<br><br>
+
+<b>아직 못 쓰는 것</b><br>
+연구가 쓴 네 값 중 <b>SPR</b>만 계산했습니다. 비브라토 속도·폭은 제 음정 추적이 불안정해서 못 넣었습니다.
+SPR도 이 카드의 합성 목소리에서는 차이가 최대 <b>156dB</b>까지 벌어집니다.
+사람 목소리 값이 아니라 점수에서 뺐습니다.<br><br>
+
+카드의 목소리·장르·저장곡은 제가 지어낸 것입니다. 측정은 진짜 파형에서 합니다.
+실제 앱에서는 이 자리에 사람 1이 이미 올려 둔 녹음과 실제 활동 기록이 들어갑니다.
+사람 목소리 데이터는 아직 <b>0명</b>입니다.<br>
+카드에 얼굴이 없습니다. 음역 막대가 곧 그 사람의 초상입니다.
+</p>
+</main>
+
+<script src="../match.js"></script>
+<script src="../timbre.js"></script>
+<script src="../taste.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+/* 엔진 세 개는 이 파일과 같은 폴더에 있어야 한다.
+   브라우저에 따라 파일을 직접 열면 옆 파일을 못 읽는 경우가 있어서,
+   그때는 빈 화면 대신 무엇을 하면 되는지 띄운다. */
+if (typeof Match === 'undefined' || typeof Timbre === 'undefined'
+    || typeof Taste === 'undefined') {
+  document.querySelector('.deck').innerHTML =
+    '<div class="card" style="justify-content:center">'
+    + '<p class="reason"><b>엔진을 못 읽었습니다.</b><br><br>'
+    + 'match.js · timbre.js · taste.js 가 이 파일과 같은 폴더에 있어야 합니다.<br>'
+    + '그래도 안 되면 폴더에서 아래를 실행하고<br>'
+    + '<code style="font-size:12px">python -m http.server 8787</code><br>'
+    + 'http://localhost:8787/매칭스와이프.html 로 여세요.</p></div>';
+  throw new Error('엔진 없음');
+}
+
+/* ── 곡 (파트 음역은 CPDL 실측) ───────────────── */
+const SATB = {
+  S:{name:'소프라노', lo:63, hi:79, lo90:63, hi90:77, highRatio:0.304},
+  A:{name:'알토',     lo:58, hi:72, lo90:58, hi90:70, highRatio:0.294},
+  T:{name:'테너',     lo:53, hi:66, lo90:55, hi90:63, highRatio:0.286},
+  B:{name:'베이스',   lo:43, hi:63, lo90:46, hi90:58, highRatio:0.247},
+};
+const SONGS = [
+  { id:'sb', title:'별빛 사이 (소프라노 · 베이스)', parts:[SATB.S, SATB.B] },
+  { id:'sa', title:'나란히 (소프라노 · 알토)',       parts:[SATB.S, SATB.A] },
+  { id:'tb', title:'낮은 방 (테너 · 베이스)',        parts:[SATB.T, SATB.B] },
+  { id:'uni', title:'한 소리로 (소프라노 둘)',        parts:[SATB.S, SATB.S] },
+  { id:'satb', title:'네 사람 (SATB 전체)',          parts:[SATB.S, SATB.A, SATB.T, SATB.B] },
+];
+
+/* ── 나 · 후보 ────────────────────────────────
+   lo/hi/lo90/hi90 은 음역대측정.html 이 뱉는 모양 그대로다.
+   voice 는 그 사람의 실제 녹음 대신 쓰는 값이다.
+   roll 이 클수록 배음이 많이 남아 밝고, noise 가 클수록 거칠다.
+   실제 앱에서는 이 자리에 사람 1이 이미 올려 둔 녹음이 들어간다. */
+const ME = { id:'me', name:'유나', lo:55, hi:84, lo90:60, hi90:80,
+  voice:{ roll:0.78, noise:0.03, atk:0.03, rel:0.07, dur:0.55, seed:11 },
+  genres:{ 'K-POP':.40, '발라드':.30, '팝':.20, 'R&B':.10 },
+  liked:['s1','s2','s3','s5','s8'], sing:['s1','s2','s3','s4','s5','s8','s9'],
+  form:'duet', role:'메인' };
+
+const POOL = [
+  { id:'p1', name:'준',   lo:41, hi:65, lo90:45, hi90:60,
+    voice:{ roll:0.50, noise:0.02, atk:0.02, rel:0.05, dur:0.50, seed:21 },
+    genres:{ '발라드':.45, 'R&B':.30, '팝':.25 },
+    liked:['s2','s3','s7'], sing:['s2','s3','s4','s7'], form:'duet', role:'받침' },
+
+  { id:'p2', name:'하린', lo:61, hi:80, lo90:64, hi90:77,
+    voice:{ roll:0.80, noise:0.04, atk:0.11, rel:0.26, dur:0.85, seed:22 },
+    genres:{ 'K-POP':.45, '팝':.30, '발라드':.25 },
+    liked:['s1','s2','s5','s8','s11'], sing:['s1','s2','s5','s8','s9','s11'],
+    form:'duet', role:'윗화음' },
+
+  { id:'p3', name:'도윤', lo:52, hi:69, lo90:55, hi90:65,
+    voice:{ roll:0.62, noise:0.10, atk:0.04, rel:0.08, dur:0.50, seed:23 },
+    genres:{ '어쿠스틱':.50, '발라드':.30, '팝':.20 },
+    liked:['s6','s10'], sing:['s4','s6','s10'], form:'acappella', role:'중간화음' },
+
+  { id:'p4', name:'서우', lo:45, hi:70, lo90:50, hi90:64,
+    voice:{ roll:0.40, noise:0.06, atk:0.02, rel:0.04, dur:0.45, seed:24 },
+    genres:{ 'R&B':.50, '팝':.30, 'K-POP':.20 },
+    liked:['s3','s7','s12'], sing:['s3','s4','s7','s12'], form:'duet', role:'받침' },
+
+  { id:'p5', name:'민아', lo:55, hi:74, lo90:58, hi90:71,
+    voice:{ roll:0.76, noise:0.02, atk:0.06, rel:0.14, dur:0.70, seed:25 },
+    genres:{ 'K-POP':.40, '발라드':.35, '팝':.25 },
+    liked:['s1','s2','s5','s8'], sing:['s1','s2','s5','s8','s9'],
+    form:'duet', role:'윗화음' },
+
+  { id:'p6', name:'태경', lo:40, hi:62, lo90:43, hi90:57,
+    voice:{ roll:0.55, noise:0.14, atk:0.02, rel:0.05, dur:0.45, seed:26 },
+    genres:{ '발라드':.55, '어쿠스틱':.25, '팝':.20 },
+    liked:['s6','s10'], sing:['s6','s7','s10'], form:'choir', role:'받침' },
+
+  { id:'p7', name:'현우', lo:39, hi:66, lo90:43, hi90:61,
+    voice:{ roll:0.71, noise:0.03, atk:0.03, rel:0.06, dur:0.55, seed:27 },
+    genres:{ 'K-POP':.35, '발라드':.35, '팝':.30 },
+    liked:['s1','s3','s5','s8'], sing:['s1','s3','s4','s5','s8','s9'],
+    form:'duet', role:'받침' },
+
+  { id:'p8', name:'세아', lo:50, hi:73, lo90:54, hi90:70,
+    voice:{ roll:0.64, noise:0.05, atk:0.05, rel:0.12, dur:0.65, seed:28 },
+    genres:{ '팝':.40, 'K-POP':.35, 'R&B':.25 },
+    liked:['s1','s5','s12'], sing:['s1','s4','s5','s9','s12'],
+    form:'duet', role:'중간화음' },
+
+  { id:'p9', name:'유진', lo:60, hi:82, lo90:63, hi90:79,
+    voice:{ roll:0.57, noise:0.08, atk:0.10, rel:0.24, dur:0.80, seed:29 },
+    genres:{ '어쿠스틱':.45, '팝':.30, '발라드':.25 },
+    liked:['s6','s10','s11'], sing:['s6','s9','s10','s11'],
+    form:'acappella', role:'메인' },
+];
+
+/* 목소리에서 음색 값과 역할을 뽑아 둔다. 사람마다 한 번만 한다. */
+const FEAT = {}, ROLE = {};
+function featOf(p){
+  if (FEAT[p.id]) return FEAT[p.id];
+  const mid = (p.lo90 + p.hi90) / 2;
+  const f0 = 440 * Math.pow(2, (mid - 69) / 12);       // 편한 구간 한가운데에서 낸 소리
+  const v = p.voice;
+  const s = Timbre.synth({ f0:f0, roll:v.roll, noise:v.noise, atk:v.atk, rel:v.rel,
+                           dur:v.dur, seed:v.seed, sr:22050 });
+  const f = Timbre.features(s.data, s.sr);
+  ROLE[p.id] = Timbre.roles(f);
+  return (FEAT[p.id] = f);
+}
+function roleOf(p){ featOf(p); return ROLE[p.id]; }
+
+/* 궁합 = 역할 조합 + 음색 닮음 + 취향.
+   -- 세 항목의 무게는 제가 정한 설계값입니다. 실제 반응 데이터가 없습니다. */
+const WEIGHT = { role: 0.35, timbre: 0.25, taste: 0.40 };
+
+/* 거름망은 점수가 아니라 예/아니오다.
+   맡을 파트의 음 하나라도 못 내면 곡이 안 끝나므로 탈락이다. */
+let MODE = 'blend';       // 'blend' 닮을수록 위 (근거 있음) / 'contrast' 갈릴수록 위
+let SPAN = 7;             // 조옮김 허용 폭(반음). 0 이면 원조성만.
+let song = SONGS[0];
+let ranked = [];
+let dropped = [];
+let idx = 0;
+let open = false;
+
+/* ── 음역 막대 ─────────────────────────────────
+   C2(36) ~ C6(84). 얼굴 대신 이걸 보여준다. */
+const LO = 36, HI = 84, W = 340, RH = 13, GAP = 7;
+function x(m){ return (m - LO) / (HI - LO) * W; }
+
+function bar(y, p, color, label){
+  const a = x(p.lo), b = x(p.hi), c = x(p.lo90), d = x(p.hi90);
+  return '<rect x="'+a.toFixed(1)+'" y="'+y+'" width="'+(b-a).toFixed(1)+'" height="'+RH+'" '
+       + 'rx="1.5" fill="'+color+'" opacity=".22"/>'
+       + '<rect x="'+c.toFixed(1)+'" y="'+y+'" width="'+(d-c).toFixed(1)+'" height="'+RH+'" '
+       + 'rx="1.5" fill="'+color+'"/>'
+       + '<text x="0" y="'+(y-4)+'" font-size="9" fill="#A79E93" letter-spacing=".08em">'+label+'</text>';
+}
+function partBar(y, part){
+  const a = x(part.lo), b = x(part.hi), c = x(part.lo90), d = x(part.hi90);
+  return '<rect x="'+a.toFixed(1)+'" y="'+y+'" width="'+(b-a).toFixed(1)+'" height="'+RH+'" '
+       + 'rx="1.5" fill="none" stroke="#8A8175" stroke-dasharray="2 2" stroke-width="1"/>'
+       + '<rect x="'+c.toFixed(1)+'" y="'+y+'" width="'+(d-c).toFixed(1)+'" height="'+RH+'" '
+       + 'rx="1.5" fill="none" stroke="#8A8175" stroke-width="1"/>'
+       + '<text x="0" y="'+(y-4)+'" font-size="9" fill="#A79E93" letter-spacing=".08em">'
+       + part.name + ' 파트</text>';
+}
+function ticks(y){
+  let s = '';
+  for (let m = 36; m <= 84; m += 12){
+    // 맨 오른쪽 눈금은 글자가 밖으로 나가므로 선 왼쪽에 붙인다
+    const last = m === HI;
+    s += '<line x1="'+x(m).toFixed(1)+'" y1="0" x2="'+x(m).toFixed(1)+'" y2="'+y+'" '
+       + 'stroke="#D9D2C6" stroke-width="1"/>'
+       + '<text x="'+(x(m) + (last ? -3 : 3)).toFixed(1)+'" y="'+(y+10)+'" font-size="9" '
+       + 'fill="#A79E93"'+(last ? ' text-anchor="end"' : '')+'>'
+       + Match.noteName(m) + '</text>';
+  }
+  return s;
+}
+function rangeSvg(m){
+  const yMe = 16, yYou = yMe + RH + GAP + 12, yPart = yYou + RH + GAP + 12;
+  const mine = m.rows.find(r => r.person.id === 'me');
+  const H = yPart + RH + 16;
+  return '<svg class="rng" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'
+       + ticks(H - 14)
+       + bar(yMe,  m.me,  'var(--me)',  '나 · ' + m.me.name)
+       + bar(yYou, m.you, 'var(--you)', '상대 · ' + m.you.name)
+       + partBar(yPart, m.rows.find(r => r.person.id !== 'me').part)
+       + '</svg>';
+}
+
+/* ── 카드 ─────────────────────────────────── */
+function cardHtml(m){
+  if (!m) return '<p class="reason">더 볼 사람이 없습니다.</p>';
+  const mine  = m.rows.find(r => r.person.id === 'me');
+  const yours = m.rows.find(r => r.person.id !== 'me');
+  const bl = m.blend, key = m.semi;
+  const reasons = m.taste.reasons.slice(0, 3)
+    .map(r => '<li>' + r + '</li>').join('');
+  return '<div class="who">'
+       +   '<div><div class="hand">' + m.you.name + '</div>'
+       +   '<span class="vd">' + m.role.label + '</span></div>'
+       +   '<div class="score"><b>' + m.fit + '</b><i>궁합</i></div>'
+       + '</div>'
+       + (reasons ? '<ul class="why">' + reasons + '</ul>'
+                  : '<p class="reason">겹치는 취향을 아직 못 찾았습니다.</p>')
+       + '<div class="assign">'
+       +   '<span class="chip">나 <b>' + mine.part.name + '</b></span>'
+       +   '<span class="chip">' + m.you.name + ' <b>' + yours.part.name + '</b></span>'
+       +   (key ? '<span class="chip key">조옮김 <b>' + (key > 0 ? '+' : '') + key
+                + '반음</b></span>' : '<span class="chip">원조성</span>')
+       + '</div>'
+       + '<div class="three">'
+       +   '<span>역할 <b>' + Math.round(m.role.fit * 100) + '</b></span>'
+       +   '<span>음색 <b>' + (bl.score == null ? '—' : bl.score) + '</b></span>'
+       +   '<span>취향 <b>' + m.taste.score + '</b></span>'
+       + '</div>'
+       + '<div class="rangebox">' + rangeSvg(m) + '</div>';
+}
+
+function backHtml(m){
+  if (!m) return '';
+  let rows = m.rows.map(r => {
+    const d = r.detail;
+    return '<tr><td>' + r.person.name + '</td><td>' + r.part.name + '</td>'
+         + '<td class="n">' + Math.round(r.fit * 100) + '</td>'
+         + '<td class="n">' + (d.marginLo >= 0 ? '+' : '') + d.marginLo + '</td>'
+         + '<td class="n">' + (d.marginHi >= 0 ? '+' : '') + d.marginHi + '</td>'
+         + '<td class="n">' + Math.round(d.tess * 100) + '%</td></tr>';
+  }).join('');
+  const bl = m.blend, meR = roleOf(ME), yoR = roleOf(m.you), yoF = featOf(m.you);
+  const t = m.taste;
+  const pct = x => Math.round(x * 100) + '%';
+  return '<h3>' + m.you.name + ' · 자세히</h3>'
+       + '<p class="tiny" style="margin:0 0 6px"><b>1단계 · 거름</b> — 모든 음에 닿는가 '
+       + '<b style="color:#2F6B4F">통과</b>'
+       + (m.semi ? ' · 조옮김 <b>' + (m.semi > 0 ? '+' : '') + m.semi + '반음</b>' : ' · 원조성')
+       + '</p>'
+       + '<table class="bd"><tr><th>사람</th><th>파트</th><th>닿음</th>'
+       + '<th>아래여유</th><th>위여유</th><th>편한구간</th></tr>' + rows + '</table>'
+       + '<p class="tiny" style="margin:10px 0 0">'
+       + '여유가 0 이상이면 그 음에 닿습니다. 하나라도 음수면 이 화면에 오지 못합니다.'
+       + (m.semi ? '<br>원조성으로는 둘 중 하나가 못 닿아서 ' + Math.abs(m.semi)
+                 + '반음 ' + (m.semi > 0 ? '올렸' : '내렸') + '습니다.' : '')
+       + '</p>'
+
+       + '<p class="tiny" style="margin:18px 0 6px"><b>2단계 · 궁합</b> — '
+       + '역할 ' + Math.round(WEIGHT.role*100) + ' + 음색 ' + Math.round(WEIGHT.timbre*100)
+       + ' + 취향 ' + Math.round(WEIGHT.taste*100) + ' = <b>' + m.fit + '</b></p>'
+
+       + '<table class="bd">'
+       + '<tr><th colspan="3">역할 조합 · ' + Math.round(m.role.fit * 100) + '</th></tr>'
+       + '<tr><td>' + ME.name + '</td><td>' + meR.top + '</td>'
+       +   '<td class="n">' + pct(meR.share[meR.top]) + '</td></tr>'
+       + '<tr><td>' + m.you.name + '</td><td>' + yoR.top + '</td>'
+       +   '<td class="n">' + pct(yoR.share[yoR.top]) + '</td></tr>'
+       + '<tr><td>어택 · 잔향</td><td colspan="2" class="n">'
+       +   Math.round(yoF.attack) + 'ms · ' + Math.round(yoF.release) + 'ms</td></tr>'
+       + '<tr><td>유지 고름 · 길이</td><td colspan="2" class="n">'
+       +   yoF.steady.toFixed(2) + ' · ' + yoF.hold.toFixed(2) + '초</td></tr>'
+       + '</table>'
+
+       + '<table class="bd" style="margin-top:14px">'
+       + '<tr><th colspan="3">취향 · ' + t.score + '</th></tr>'
+       + '<tr><td>장르 닮음</td><td colspan="2" class="n">' + pct(t.genre)
+       +   (t.topGenres.length ? ' (' + t.topGenres.map(x => x.name).join(' · ') + ')' : '')
+       +   '</td></tr>'
+       + '<tr><td>함께 부를 곡</td><td colspan="2" class="n">' + t.songs.length + '곡</td></tr>'
+       + '<tr><td>저장한 곡 겹침</td><td colspan="2" class="n">' + pct(t.liked) + '</td></tr>'
+       + '<tr><td>원하는 편성</td><td colspan="2" class="n">'
+       +   Taste.FORM_NAME[ME.form] + ' / ' + Taste.FORM_NAME[m.you.form]
+       +   (t.form ? ' · 같음' : ' · 다름') + '</td></tr>'
+       + '<tr><td>맡고 싶은 자리</td><td colspan="2" class="n">'
+       +   ME.role + ' / ' + m.you.role + ' · ' + pct(t.wish) + '</td></tr>'
+       + '</table>'
+
+       + '<table class="bd" style="margin-top:14px">'
+       + '<tr><th colspan="3">음색 · ' + (bl.score == null ? '—' : bl.score) + '</th></tr>'
+       + '<tr><td>결 차이</td><td class="n">' + bl.texture.toFixed(3) + '</td>'
+       +   '<td>전체 쌍 중 하위 ' + Math.round(bl.percentile * 100) + '%</td></tr>'
+       + '<tr><td>가림</td><td class="n">' + bl.mask.toFixed(3) + '</td>'
+       +   '<td>' + bl.audible + '</td></tr>'
+       + '<tr><td>SPR 차이</td><td class="n">' + bl.sprGap.toFixed(1) + 'dB</td>'
+       +   '<td>점수에는 안 씀</td></tr>'
+       + '</table>'
+       + '<p class="tiny" style="margin-top:12px">'
+       + '<b>점수</b>는 결 차이를 실측 분포에 맞춰 0~100 으로 편 값입니다. '
+       + '목소리 123개로 만든 쌍 7,503개를 재서 10분위를 구했습니다. '
+       + '이론상 최대는 1.0 이지만 실제로는 <b>0.558</b> 을 안 넘어서, '
+       + '그대로 나누면 아무도 높은 점수를 못 받습니다.<br><br>'
+       + '<b>결 차이</b>는 기본음 대비 배음이 깔리는 모양을 비교합니다. 음 높이가 지워집니다. '
+       + '실측 — 결은 같고 음높이만 다른 쌍 178개에서 중앙값 0.030 · 최대 0.090.<br><br>'
+       + '<b>가림</b>은 음역과 음색을 못 가릅니다. '
+       + '실측 — 1옥타브 차이 0.481 / 같은 높이에 결만 다름 0.480. 값이 같습니다. '
+       + '그래서 줄 세우기에 안 쓰고 "겹쳐 들으면 둘 다 들리나"에만 씁니다.<br><br>'
+       + '<b>SPR</b>(2~4kHz 봉우리 ÷ 0~2kHz 봉우리)은 듀엣 블렌드 연구가 쓴 네 값 중 하나라 '
+       + '계산은 해 뒀습니다. 다만 이 카드의 목소리는 제가 합성한 것이라 SPR 차이가 '
+       + '최대 156dB 까지 벌어집니다. 사람 목소리에서 나올 값이 아니라 점수에 안 넣었습니다.<br><br>'
+       + (bl.mode === 'contrast'
+          ? '지금은 <b>갈릴수록 위</b>입니다. 이 방향에는 <b>근거가 없습니다.</b> '
+            + '두 목소리가 구별돼야 한다는 기획 전제일 뿐입니다.'
+          : '지금은 <b>닮을수록 위</b>입니다. 듀엣 보이스매칭 연구가 근거입니다 — '
+            + '가수 14명, 지휘자 평가자 48명. 네 값이 블렌드 인식의 79%를 설명했고, '
+            + '닮은 목소리끼리가 더 잘 섞였습니다.')
+       + '</p>';
+}
+
+function render(){
+  $('card').innerHTML = cardHtml(ranked[idx]);
+  $('peek').innerHTML = cardHtml(ranked[idx + 1]);
+  $('back').innerHTML = backHtml(ranked[idx]);
+  // 상세를 볼 때는 카드를 실제로 아래로 빼야 뒷면이 드러난다.
+  // 플래그만 세우면 카드가 그대로 덮고 있는다.
+  $('card').style.transform = open ? 'translateY(100%)' : '';
+  $('card').style.opacity   = open ? '0' : '';
+  $('deck').classList.toggle('open', open);
+  $('prev').disabled = idx === 0;
+  $('next').disabled = idx >= ranked.length - 1;
+  $('flip').textContent = open ? '접기' : '자세히';
+  $('hint').innerHTML = open
+    ? '위로 밀면 카드가 다시 덮입니다'
+    : '오른쪽으로 밀면 다른 사람 · 아래로 밀면 자세히<br>'
+      + '<span style="color:#C0B8AC">' + (idx + 1) + ' / ' + ranked.length + ' 명</span>';
+}
+
+/* 두 단계.
+   1) 음역으로 거른다. 통과선을 못 넘으면 아예 후보에서 뺀다.
+   2) 통과한 사람만 실제로 소리를 겹쳐서 음색으로 줄 세운다. */
+function rebuild(){
+  // 1단계 거름 — 예/아니오. 점수를 쓰지 않는다. 조옮김을 허용한다.
+  const all = Match.rankCandidates(ME, POOL, song, SPAN);
+  dropped = all.filter(m => !m.complete);
+  ranked  = all.filter(m =>  m.complete);
+
+  // 2단계 줄 세우기 — 통과한 사람만. 역할 + 음색 + 취향.
+  const meF = featOf(ME), meR = roleOf(ME);
+  ranked.forEach(m => {
+    m.blend = Timbre.blend(meF, featOf(m.you), MODE);
+    m.role  = Timbre.rolePair(meR, roleOf(m.you));
+    m.taste = Taste.tasteMatch(ME, m.you);
+    m.fit   = Math.round(
+        WEIGHT.role   * m.role.fit * 100
+      + WEIGHT.timbre * (m.blend.score == null ? 50 : m.blend.score)
+      + WEIGHT.taste  * m.taste.score);
+  });
+  ranked.sort((a, b) => b.fit - a.fit);
+
+  idx = 0; open = false;
+  $('songs').innerHTML = SONGS.map(s =>
+    '<button class="mini' + (s.id === song.id ? ' on' : '') + '" data-s="' + s.id + '">'
+    + s.title + '</button>').join('');
+  // 아무도 안 남았을 때는 이유를 말해 준다. 원인이 둘이라 구분한다.
+  let why = '';
+  if (!ranked.length) {
+    if (song.parts.length > 2) {
+      why = '<br><b>둘로는 이 곡을 못 채웁니다.</b> 파트가 ' + song.parts.length
+          + '개라 ' + song.parts.length + '명이 필요합니다.';
+    } else {
+      const mineOk = song.parts.some(p => Match.partFit(ME, p).canSing);
+      why = mineOk
+        ? '<br><b>상대 쪽 파트를 부를 수 있는 사람이 없습니다.</b>'
+        : '<br><b>이 곡에는 ' + ME.name + '님이 부를 파트가 없습니다.</b> 먼저 곡을 바꿔야 합니다.';
+    }
+  }
+  const moved = ranked.filter(m => m.semi).length;
+  $('sieve').innerHTML =
+    '<b>1단계 · 거름</b> — 이 곡의 모든 음에 닿는가. 점수가 아니라 예 / 아니오입니다.<br>'
+    + POOL.length + '명 중 <b>' + ranked.length + '명</b>이 남았습니다'
+    + (SPAN ? ' (조옮김 ±' + SPAN + '반음 허용, 그중 ' + moved + '명은 옮겨야 함).'
+            : ' (원조성만).') + why
+    + (dropped.length
+        ? '<br>떨어진 사람 — ' + dropped.map(m => {
+            const w = m.miss[0];
+            if (!w) return '<s>' + m.you.name + ' 파트가 빔</s>';
+            const gap = !w.detail.reachLo ? -w.detail.marginLo : -w.detail.marginHi;
+            const dir = !w.detail.reachLo ? '아래로' : '위로';
+            return '<s>' + m.you.name + ' ' + dir + ' ' + gap + '반음</s>';
+          }).join(' · ')
+        : '')
+    + '<br><br><b>2단계 · 줄 세우기</b> — 남은 사람만 실제로 소리를 겹쳐서 음색으로.';
+  render();
+}
+
+function go(d){
+  const n = idx + d;
+  if (n < 0 || n >= ranked.length) { render(); return; }
+  idx = n; open = false; render();
+}
+function setOpen(v){ open = v; render(); }
+
+/* ── 밀기 ─────────────────────────────────────
+   오른쪽/왼쪽 = 사람 넘기기, 아래 = 뒷면 보기, 위 = 덮기.
+   ── 기획에 있던 건 '오른쪽 = 다른 사람'과 '아래 = 상세' 둘입니다.
+      왼쪽(이전)과 위(덮기)는 제가 짝으로 넣은 것이라, 빼도 됩니다. */
+const TH_X = 70, TH_Y = 80;
+let sx = 0, sy = 0, dragging = false, axis = null;
+
+function onDown(e){
+  dragging = true; axis = null;
+  sx = e.clientX; sy = e.clientY;
+  $('card').classList.add('drag');
+  if (e.pointerId != null && $('deck').setPointerCapture) {
+    try { $('deck').setPointerCapture(e.pointerId); } catch (_) {}
+  }
+}
+function onMove(e){
+  if (!dragging) return;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (!axis && Math.abs(dx) + Math.abs(dy) > 8)
+    axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+  if (!axis) return;
+
+  const c = $('card');
+  if (axis === 'x') {
+    c.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 28).toFixed(2) + 'deg)';
+    c.style.opacity = String(Math.max(.35, 1 - Math.abs(dx) / 420));
+  } else {
+    const d = open ? Math.min(0, dy) : Math.max(0, dy);
+    c.style.transform = 'translateY(' + d + 'px)';
+    c.style.opacity = String(Math.max(.2, 1 - Math.abs(d) / 300));
+  }
+}
+function onUp(){
+  if (!dragging) return;
+  dragging = false;
+  $('card').classList.remove('drag');
+  const c = $('card');
+  const t = c.style.transform;
+  const mx = /translateX\((-?[\d.]+)px\)/.exec(t);
+  const my = /translateY\((-?[\d.]+)px\)/.exec(t);
+  const dx = mx ? parseFloat(mx[1]) : 0;
+  const dy = my ? parseFloat(my[1]) : 0;
+
+  if (axis === 'x' && Math.abs(dx) > TH_X)      go(dx > 0 ? 1 : -1);
+  else if (axis === 'y' && dy >  TH_Y && !open) setOpen(true);
+  else if (axis === 'y' && dy < -TH_Y &&  open) setOpen(false);
+  else render();                                 // 문턱을 못 넘으면 제자리
+  axis = null;
+}
+
+$('deck').addEventListener('pointerdown', onDown);
+$('deck').addEventListener('pointermove', onMove);
+$('deck').addEventListener('pointerup', onUp);
+$('deck').addEventListener('pointercancel', onUp);
+
+$('next').onclick  = () => go(1);
+$('prev').onclick  = () => go(-1);
+$('flip').onclick  = () => setOpen(!open);
+$('reset').onclick = () => rebuild();
+$('span').onclick  = () => {
+  SPAN = SPAN ? 0 : 7;
+  $('span').textContent = '조옮김: ' + (SPAN ? '±' + SPAN + '반음' : '안 함');
+  rebuild();
+};
+$('mode').onclick  = () => {
+  MODE = MODE === 'blend' ? 'contrast' : 'blend';
+  $('mode').textContent = '줄 세우기: ' + (MODE === 'blend' ? '닮은 순' : '갈린 순');
+  rebuild();
+};
+$('songs').onclick = e => {
+  const b = e.target.closest('button[data-s]');
+  if (!b) return;
+  song = SONGS.find(s => s.id === b.dataset.s);
+  rebuild();
+};
+
+rebuild();
+
+/* ── 검사 ─────────────────────────────────── */
+window.__T = async () => {
+  const t = $('tt');
+  t.innerHTML = '<tr><th>항목</th><th>결과</th><th>판정</th></tr>';
+  document.body.classList.add('notrans');     // 전환 효과를 끔고 재다
+  const add = (a, b, ok) => {
+    const r = document.createElement('tr');
+    r.innerHTML = '<td>' + a + '</td><td>' + b + '</td>'
+                + '<td class="' + (ok ? 'ok' : 'ng') + '">' + (ok ? '통과' : '실패') + '</td>';
+    t.appendChild(r);
+  };
+  // 카드에 전환 효과가 걸려 있어서 바로 읽으면 중간값이 나온다
+  const settle = () => new Promise(r => setTimeout(r, 300));
+  const swipe = (dx, dy) => {
+    const d = $('deck'), r = d.getBoundingClientRect();
+    const x0 = r.left + r.width / 2, y0 = r.top + r.height / 2;
+    const ev = (n, x, y) => d.dispatchEvent(new PointerEvent(n, {
+      clientX: x, clientY: y, bubbles: true, pointerId: 1 }));
+    ev('pointerdown', x0, y0);
+    ev('pointermove', x0 + dx * 0.4, y0 + dy * 0.4);
+    ev('pointermove', x0 + dx,       y0 + dy);
+    ev('pointerup',   x0 + dx,       y0 + dy);
+  };
+
+  /* --- 엔진 --- */
+  const duo = { title:'t', parts:[SATB.S, SATB.B] };
+  const sop = { id:'a', name:'가', lo:60, hi:81, lo90:63, hi90:78 };
+  const bas = { id:'b', name:'나', lo:41, hi:65, lo90:45, hi90:60 };
+  const sop2= { id:'c', name:'다', lo:61, hi:80, lo90:64, hi90:77 };
+
+  const mixed = Match.matchPair(sop, bas, duo);
+  const same  = Match.matchPair(sop, sop2, duo);
+  add('음역이 갈린 둘이 겹친 둘보다 높음',
+      '소프라노+베이스 ' + mixed.score + ' vs 소프라노+소프라노 ' + same.score,
+      mixed.score > same.score);
+
+  add('못 내는 음을 반음 수로 짚어줌', same.reason,
+      /반음 못/.test(same.reason));
+
+  add('같은 입력이면 같은 점수',
+      Match.matchPair(sop, bas, duo).score + ' = ' + mixed.score,
+      Match.matchPair(sop, bas, duo).score === mixed.score);
+
+  const scores = Match.rankCandidates(ME, POOL, SONGS[3]).map(m => m.score);
+  add('점수가 0~100 안에 있음', '최저 ' + Math.min(...scores) + ' · 최고 ' + Math.max(...scores),
+      scores.every(s => s >= 0 && s <= 100));
+
+  add('두 사람이 서로 다른 파트를 맡음',
+      mixed.rows.map(r => r.person.name + '→' + r.part.name).join(', '),
+      mixed.rows[0].part.name !== mixed.rows[1].part.name);
+
+  const duoM  = Match.matchPair(sop, bas, duo);
+  const satbM = Match.matchPair(sop, bas, { title:'t', parts:[SATB.S, SATB.A, SATB.T, SATB.B] });
+  add('사람이 파트보다 적으면 깎임',
+      '2파트곡 ' + duoM.score + ' → 4파트곡 ' + satbM.score
+      + ' (채워진 파트 ' + Math.round(satbM.covered * 100) + '%)',
+      satbM.score < duoM.score && Math.abs(satbM.covered - 0.5) < 1e-9);
+
+  const rk = Match.rankCandidates(ME, POOL, SONGS[0]).map(m => m.score);
+  add('음역 점수 자체는 여전히 계산됨 (이제 거름망에는 안 씁)', rk.join(' · '),
+      rk.every((s, i) => i === 0 || rk[i - 1] >= s));
+
+  /* --- 음색 엔진 --- */
+  const mkv = (f0, roll, seed) => {
+    const s = Timbre.synth({ f0:f0, roll:roll, seed:seed, dur:0.5, sr:22050 });
+    return Timbre.features(s.data, s.sr);
+  };
+  const brightA = mkv(220, 0.85, 1), brightB = mkv(220, 0.85, 3);
+  const darkA   = mkv(220, 0.45, 2);
+  const lowSame = mkv(110, 0.85, 4), hiSame = mkv(440, 0.85, 5);
+
+  add('기본음을 제대로 집음',
+      [220, 110, 440].join(' → ')
+      + ' / ' + [brightA.f0, lowSame.f0, hiSame.f0].map(f => f.toFixed(1)).join(' · '),
+      Math.abs(brightA.f0 - 220) < 2 && Math.abs(lowSame.f0 - 110) < 2
+      && Math.abs(hiSame.f0 - 440) < 2);
+
+  const texSame  = Timbre.blend(brightA, brightB).texture;
+  const texDiff  = Timbre.blend(brightA, darkA).texture;
+  add('결 — 같은 소리는 0, 다른 소리는 큼',
+      '같음 ' + texSame.toFixed(3) + ' vs 다름 ' + texDiff.toFixed(3),
+      texSame < 0.05 && texDiff > 0.25);
+
+  const texOct = Timbre.blend(lowSame, hiSame).texture;
+  add('결이 음 높이를 지움 (2옥타브 차, 결 같음)',
+      texOct.toFixed(3) + ' — 결이 다를 때(' + texDiff.toFixed(3) + ')보다 훨씬 작아야 함',
+      texOct < 0.1 && texOct < texDiff / 3);
+
+  const maskOct = Timbre.blend(lowSame, mkv(220, 0.85, 6)).mask;
+  const maskTex = Timbre.blend(brightA, darkA).mask;
+  add('가림은 음역과 음색을 못 가름 (그래서 줄세우기에 안 씀)',
+      '1옥타브 차 ' + maskOct.toFixed(3) + ' vs 결만 다름 ' + maskTex.toFixed(3),
+      Math.abs(maskOct - maskTex) < 0.1);
+
+  add('같은 소리끼리는 가림이 최대',
+      Timbre.blend(brightA, brightB).mask.toFixed(3),
+      Timbre.blend(brightA, brightB).mask > 0.98);
+
+  add('닮으면 높고 갈리면 낮음 (기본값: 닮은 순)',
+      '닮은 쌍 ' + Timbre.blend(brightA, brightB).score
+      + ' > 갈린 쌍 ' + Timbre.blend(brightA, darkA).score,
+      Timbre.blend(brightA, brightB).score > Timbre.blend(brightA, darkA).score);
+
+  /* --- 1단계는 거름망이지 점수가 아니다 --- */
+  song = SONGS[0]; MODE = 'blend'; rebuild();
+  add('거름망은 예 / 아니오 단 하나',
+      '남음 ' + ranked.map(m => m.you.name).join(' · ')
+      + ' / 떨어짐 ' + dropped.map(m => m.you.name).join(' · '),
+      ranked.every(m => m.complete) && dropped.every(m => !m.complete)
+      && ranked.length > 0 && dropped.length > 0);
+
+  add('못 내는 음이 하나라도 있으면 탈락',
+      dropped.map(m => m.you.name + (m.miss[0]
+        ? '(' + m.miss[0].part.name + ' 못 닿음)' : '(파트 빈)')).join(' · '),
+      dropped.every(m => m.miss.length > 0 || m.covered < 1));
+
+  add('남은 사람은 모든 음에 닿음',
+      ranked.map(m => m.you.name + ' 아래' + m.rows[1].detail.marginLo
+        + ' 위' + m.rows[1].detail.marginHi).join(' · '),
+      ranked.every(m => m.rows.every(r => r.detail.canSing)));
+
+  const bs = ranked.map(m => m.blend.score);
+  add('줄 세우기는 음색으로만',
+      ranked.map(m => m.you.name + ' ' + m.blend.score).join(' · '),
+      bs.every((x, i2) => i2 === 0 || bs[i2 - 1] >= x));
+
+  add('점수가 0~100 을 골고루 씁',
+      '가장 닮은 한 쌍 ' + Timbre.blend(brightA, brightB).score
+      + ' · 중간값(0.195) ' + Math.round((1 - Timbre.texPercentile(0.195)) * 100)
+      + ' · 가장 먼 한 쌍 ' + Timbre.blend(mkv(220, 0.85, 7), mkv(220, 0.35, 8)).score,
+      Timbre.blend(brightA, brightB).score === 100
+      && Math.abs(Math.round((1 - Timbre.texPercentile(0.195)) * 100) - 50) <= 6);
+
+  /* --- 조옮김 --- */
+  const wide = { id:'w', name:'넓은사람', lo:55, hi:88, lo90:60, hi90:84 };
+  const sea2 = { id:'s', name:'세아',     lo:50, hi:73, lo90:54, hi90:70 };
+  const duo2 = { title:'t', parts:[SATB.S, SATB.B] };
+  const k0 = Match.matchPair(wide, sea2, duo2).complete;
+  const k7 = Match.bestKey([wide, sea2], duo2, 7);
+  add('원조성으로 안 되면 조옮김을 찾음',
+      '원조성 ' + (k0 ? '됨' : '안 됨') + ' → ' + (k7 ? (k7.semi > 0 ? '+' : '') + k7.semi + '반음' : '없음'),
+      !k0 && !!k7 && k7.semi === 7);
+
+  add('옮긴 조성에서는 둘 다 닿음',
+      k7 ? k7.assign.rows.map(r => r.person.name + '→' + r.part.name
+            + '(아래' + r.detail.marginLo + ' 위' + r.detail.marginHi + ')').join(' · ') : '없음',
+      !!k7 && k7.assign.rows.every(r => r.detail.canSing));
+
+  const narrow = { id:'n', name:'좁은사람', lo:52, hi:69, lo90:55, hi90:65 };
+  add('음역이 파트보다 좁으면 조옮김으로도 안 됨',
+      '음역폭 ' + (narrow.hi - narrow.lo) + '반음 / 베이스 파트폭 '
+      + (SATB.B.hi - SATB.B.lo) + '반음',
+      !Match.bestKey([wide, narrow], duo2, 12));
+
+  add('조옮김은 원조성에서 가까운 쪽부터 찾음',
+      '±7 안에서 찾은 값 ' + (k7 ? k7.semi : '-') + ' · ±12 로 넓혀도 같음',
+      !!k7 && Match.bestKey([wide, sea2], duo2, 12).semi === k7.semi);
+
+  SPAN = 0; song = SONGS[0]; rebuild();
+  const noKey = ranked.length;
+  SPAN = 7; rebuild();
+  add('조옮김을 켜면 통과하는 사람이 늘어남',
+      '원조성만 ' + noKey + '명 → ±7반음 ' + ranked.length + '명',
+      ranked.length > noKey);
+
+  /* --- 역할 --- */
+  const mkRole = o => Timbre.roles(Timbre.features(
+        Timbre.synth({ sr:22050, seed:7, ...o }).data, 22050));
+  const rLow  = mkRole({ f0:110, roll:0.45, noise:0.02, atk:0.02, rel:0.05, dur:0.50 });
+  const rHigh = mkRole({ f0:330, roll:0.85, noise:0.06, atk:0.12, rel:0.30, dur:0.90 });
+  add('낮고 밀도 높은 소리 → 받침', rLow.top + ' ' + Math.round(rLow.share[rLow.top]*100) + '%',
+      rLow.top === '받침');
+  add('가볍고 호흡이 긴 소리 → 윗화음', rHigh.top + ' ' + Math.round(rHigh.share[rHigh.top]*100) + '%',
+      rHigh.top === '윗화음');
+
+  const eLow = Timbre.envelope(Timbre.synth({ f0:220, atk:0.02, rel:0.04, dur:0.5, sr:22050 }).data, 22050);
+  const eHi  = Timbre.envelope(Timbre.synth({ f0:220, atk:0.14, rel:0.30, dur:0.9, sr:22050 }).data, 22050);
+  add('어택과 잔향을 시간으로 잼',
+      '빠름 ' + Math.round(eLow.attack) + '/' + Math.round(eLow.release) + 'ms · '
+      + '느림 ' + Math.round(eHi.attack) + '/' + Math.round(eHi.release) + 'ms',
+      eHi.attack > eLow.attack * 2 && eHi.release > eLow.release * 2);
+
+  add('같은 자리끼리는 조합 점수가 낮음',
+      '메인+받침 ' + Timbre.ROLE_PAIR['메인|받침']
+      + ' vs 메인+메인 ' + Timbre.ROLE_PAIR['메인|메인'],
+      Timbre.ROLE_PAIR['메인|받침'] > Timbre.ROLE_PAIR['메인|메인']);
+
+  /* --- 취향 --- */
+  const tMina = Taste.tasteMatch(ME, POOL.find(p => p.id === 'p5'));   // 민아 — 겹침 많음
+  const tDoyun= Taste.tasteMatch(ME, POOL.find(p => p.id === 'p3'));   // 도윤 — 겹침 적음
+  add('취향이 겹치면 점수가 높음',
+      '민아 ' + tMina.score + ' vs 도윤 ' + tDoyun.score,
+      tMina.score > tDoyun.score);
+
+  add('함께 부를 곡을 실제로 세어 문구로 냄',
+      tMina.reasons.join(' / ') || '없음',
+      /함께 부르기 좋은 곡이 \d+개 있어요/.test(tMina.reasons.join(' ')));
+
+  add('장르가 닮으면 그렇다고 말함',
+      '장르 닮음 ' + Math.round(tMina.genre * 100) + '% · '
+      + (tMina.reasons.find(r => /장르|취향/.test(r)) || '문구 없음'),
+      tMina.genre > 0.9 && tMina.reasons.some(r => /장르가 비슷해요/.test(r)));
+
+  add('원하는 편성이 다르면 문구가 안 나옴',
+      ME.form + ' vs ' + POOL.find(p => p.id === 'p3').form + ' → '
+      + (tDoyun.reasons.some(r => /둘 다 원해요/.test(r)) ? '문구 나옴' : '안 나옴'),
+      !tDoyun.reasons.some(r => /둘 다 원해요/.test(r)));
+
+  /* --- 셋을 합친 궁합 --- */
+  song = SONGS[0]; MODE = 'blend'; SPAN = 7; rebuild();
+  add('궁합 = 역할 + 음색 + 취향 을 실제로 더함',
+      ranked.slice(0,2).map(m => m.you.name + ' ' + m.fit
+        + '(역' + Math.round(m.role.fit*100) + '·색' + m.blend.score + '·취' + m.taste.score + ')').join(' · '),
+      ranked.every(m => Math.abs(m.fit - Math.round(
+        WEIGHT.role*m.role.fit*100
+        + WEIGHT.timbre*(m.blend.score == null ? 50 : m.blend.score)
+        + WEIGHT.taste*m.taste.score)) <= 1));
+
+  add('궁합 내림차순으로 줄 세움',
+      ranked.map(m => m.you.name + ' ' + m.fit).join(' · '),
+      ranked.every((m, i2) => i2 === 0 || ranked[i2-1].fit >= m.fit));
+
+  // 아무도 안 남는 두 경우에 이유를 제대로 말하는가
+  SPAN = 0;                            // 조옮김을 끈 상태에서만 생기는 경우다
+  song = SONGS[2]; rebuild();          // 낮은 방 — 원조성으로는 내가 부를 파트가 없다
+  add('내가 부를 파트가 없으면 그렇다고 말함',
+      ranked.length + '명 통과 · ' + ($('sieve').textContent.match(/부를 파트가 없습니다/) ? '이유 표시됨' : '이유 없음'),
+      ranked.length === 0 && /부를 파트가 없습니다/.test($('sieve').textContent));
+
+  song = SONGS[4]; SPAN = 7; rebuild();  // 네 사람 — 조옮김을 켜도 둘로는 못 채운다
+  add('둘로 못 채우는 곡이면 그렇다고 말함',
+      ranked.length + '명 통과 · ' + ($('sieve').textContent.match(/둘로는/) ? '이유 표시됨' : '이유 없음'),
+      ranked.length === 0 && /둘로는 이 곡을 못 채우다|둘로는/.test($('sieve').textContent));
+
+  song = SONGS[0]; SPAN = 7; rebuild();
+  const listA = ranked.map(m => m.you.name).join(',');
+  song = SONGS[1]; rebuild();
+  const listB = ranked.map(m => m.you.name).join(',');
+  add('곡을 바꾸면 남는 사람이 달라짐',
+      '별빛 사이: ' + listA + ' / 나란히: ' + listB,
+      listA !== listB && ranked.length > 0);
+
+  song = SONGS[0]; MODE = 'blend'; rebuild();
+  const blendTop = ranked[0].you.name;
+  MODE = 'contrast'; rebuild();
+  add('닮은 순 / 갈린 순 을 바꾸면 뒤집힘',
+      '닮은 순 1등 ' + blendTop + ' · 갈린 순 1등 ' + ranked[0].you.name,
+      ranked[0].you.name !== blendTop);
+  MODE = 'blend';
+
+  add('기본음을 못 잡으면 점수를 내지 않음',
+      (() => { const b = Timbre.blend({f0:0,harm:new Array(8).fill(0),bark:new Array(24).fill(0),spr:0,centroid:0}, brightA);
+               return b.score === null ? b.label : '점수 ' + b.score; })(),
+      Timbre.blend({f0:0,harm:new Array(8).fill(0),bark:new Array(24).fill(0),spr:0,centroid:0}, brightA).score === null);
+
+  /* --- 화면 --- */
+  song = SONGS[0]; MODE = 'blend'; rebuild();
+  const first = ranked[0].you.name;
+  swipe(140, 0);
+  add('오른쪽으로 밀면 다른 사람', first + ' → ' + ranked[idx].you.name, idx === 1);
+
+  swipe(-140, 0);
+  add('왼쪽으로 밀면 이전 사람 (제가 넣은 짝)', ranked[idx].you.name, idx === 0);
+
+  swipe(30, 0);
+  add('문턱을 못 넘으면 제자리', '30px 밀었을 때 ' + (idx + 1) + '번째',
+      idx === 0 && $('card').style.transform === '');
+
+  swipe(0, 150);
+  await settle();
+  add('아래로 밀면 상세가 열림',
+      open ? '열림 · ' + $('back').textContent.trim().slice(0, 12) + '…' : '안 열림',
+      open === true && $('deck').classList.contains('open'));
+
+  // 플래그만 보면 안 된다. 카드가 실제로 자리를 비켰는지 재 본다.
+  // 불투명도 대신 위치를 쓴다. 위치는 그려지지 않아도 계산되기 때문이다.
+  const cr = $('card').getBoundingClientRect(), dr = $('deck').getBoundingClientRect();
+  add('상세가 열리면 카드가 실제로 비켜남',
+      '카드 윗변이 더미 아랫변보다 ' + Math.round(cr.top - dr.bottom) + 'px 아래'
+      + ' · 뒷면 불투명도 ' + getComputedStyle($('back')).opacity,
+      cr.top >= dr.bottom - 2
+      && parseFloat(getComputedStyle($('back')).opacity) > 0.95);
+
+  add('뒷면을 볼 때 다음 사람 카드가 비치지 않음',
+      '뒤 카드 불투명도 ' + getComputedStyle($('peek')).opacity,
+      parseFloat(getComputedStyle($('peek')).opacity) < 0.05);
+
+  swipe(0, -150);
+  await settle();
+  const cr2 = $('card').getBoundingClientRect(), dr2 = $('deck').getBoundingClientRect();
+  add('위로 밀면 다시 덮임 (제가 넣은 짝)',
+      '카드가 더미 자리로 돌아옴 (윗변 차 '
+      + Math.round(cr2.top - dr2.top) + 'px)',
+      open === false && $('card').style.transform === ''
+      && Math.abs(cr2.top - dr2.top) < 2);
+
+  /* --- 지난번에 놓쳤던 것 --- */
+  const over = document.documentElement.scrollWidth > window.innerWidth + 1;
+  add('360px 폭에서 가로로 넘치지 않음',
+      '문서 ' + document.documentElement.scrollWidth + 'px / 화면 ' + window.innerWidth + 'px',
+      !over);
+
+  add('카드에 얼굴 이미지가 없음',
+      document.querySelectorAll('.deck img').length + '개',
+      document.querySelectorAll('.deck img').length === 0);
+
+  document.body.classList.remove('notrans');
+  song = SONGS[0]; rebuild();
+  return { 통과: ranked.length, 탈락: dropped.length,
+           첫째: ranked[0].you.name, 음색점수: ranked[0].blend.score };
+};
+window.addEventListener('load', () => setTimeout(window.__T, 60));
+</script>

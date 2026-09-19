@@ -1,0 +1,597 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이음 — 반주 위에 녹음하고 합치기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F2EFE8;--ink:#1B1917;--ink-2:#6B635B;--ink-3:#A79E93;--line:#D9D2C6;
+ --s1:8px;--s2:16px;--s3:24px;--s4:32px;--s6:48px;--s8:64px;--s10:80px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:760px;margin:0 auto;padding:var(--s10) var(--s3)}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s2)}
+h1{font-size:32px;line-height:1.13;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em}
+h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin:var(--s6) 0 var(--s2)}
+.lead{font-size:16px;color:var(--ink-2);margin:0 0 var(--s4);max-width:48ch}
+.hand{font-family:"Nanum Pen Script",cursive;font-size:24px;color:var(--ink);line-height:1.35}
+button{font:inherit;font-size:14px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:11px 24px;cursor:pointer;transition:.18s}
+button:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+button:disabled{opacity:.3;cursor:default}
+button.on{background:var(--ink);color:var(--paper)}
+.row{display:flex;gap:var(--s1);align-items:center;flex-wrap:wrap}
+hr{border:0;border-top:1px solid var(--line);margin:var(--s6) 0}
+.warn{border-left:2px solid #C0392B;padding-left:var(--s2);font-size:13px;line-height:1.55;color:var(--ink-2);margin:var(--s3) 0}
+.tiny{font-size:11px;color:var(--ink-3);line-height:1.7}
+code{font:12px ui-monospace,monospace;background:rgba(27,25,23,.06);padding:1px 5px;border-radius:3px}
+.track{border-top:1px solid var(--line);padding:var(--s2) 0;display:grid;grid-template-columns:96px 1fr auto;gap:var(--s2);align-items:center}
+.track .nm{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+canvas{width:100%;height:46px;display:block;background:rgba(27,25,23,.03)}
+.st{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cal{display:grid;grid-template-columns:1fr auto;gap:var(--s2);align-items:center;margin:var(--s2) 0}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:20px;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--ink);margin-top:-5.5px}
+input[type=range]::-moz-range-track{height:1px;background:var(--line)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:var(--s2) 0}
+th,td{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left}
+th{color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ok{color:#2E7D4F;font-weight:700}.ng{color:#C0392B;font-weight:700}
+.chk{font-size:13px;color:var(--ink-2);display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.chk input{accent-color:var(--ink);width:15px;height:15px}
+.chk select{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  border-radius:6px;padding:4px 8px;margin-left:2px;cursor:pointer}
+.cmp{display:flex;gap:var(--s1);align-items:center;padding:0 0 var(--s2) 96px;margin-top:calc(-1 * var(--s1))}
+button.mini{font-size:12px;padding:5px 14px;border-radius:999px}
+</style>
+
+<main>
+<p class="eyebrow">ieum · step 02</p>
+<h1>반주 위에 녹음하고<br>두 사람 것을 합치기</h1>
+<p class="lead">이 화면이 확인하려는 것은 하나입니다. <b>각자 다른 시간에 녹음해도 합쳤을 때 박자가 맞는가.</b> 반주는 이 페이지가 직접 만들어 냅니다 — 저작권 문제를 피하려고 외부 음원을 안 씁니다.</p>
+
+<div id="env"></div>
+
+<h2>보정</h2>
+<p class="tiny">마이크로 들어온 소리는 항상 조금 늦게 도착합니다. 브라우저가 알려주는 값으로 자동 보정하고, 남는 오차는 아래에서 손으로 맞춥니다. 실제 서비스에서는 이 값을 기기별로 한 번 재서 저장해 두면 됩니다.</p>
+<div class="cal">
+  <input type="range" id="off" min="-300" max="300" value="0" step="5">
+  <div class="st"><span id="offv">0</span> ms <span id="auto" style="color:var(--ink-3)"></span></div>
+</div>
+
+<h2>잡음</h2>
+<div class="row" style="gap:var(--s3)">
+  <label class="chk"><input type="checkbox" id="ns" checked> 브라우저 잡음 제거</label>
+  <label class="chk">바닥 잡음 누르기
+    <select id="clean">
+      <option value="0" selected>끔</option>
+      <option value="0.45">약하게</option>
+      <option value="0.9">세게</option>
+    </select>
+  </label>
+  <label class="chk">사람 목소리만 남기기
+    <select id="voice">
+      <option value="0" selected>끔</option>
+      <option value="0.5">약하게</option>
+      <option value="0.9">세게</option>
+    </select>
+  </label>
+</div>
+<p class="tiny" style="margin-top:var(--s1)"><b>둘 다 기본은 끔으로 바꿨습니다.</b> 먼저 끈 상태로 녹음해서 원본이 어떤지 보고, 필요한 만큼만 올리세요.</p>
+<p class="tiny" style="margin-top:var(--s1)">
+  <b>바닥 잡음 누르기</b>는 소리의 <b>크기</b>로 거릅니다. 녹음 전 실제로 잰 바닥값이 기준이라 고정값이 아닙니다.<br>
+  <b>사람 목소리만 남기기</b>는 소리의 <b>규칙성</b>으로 거릅니다. 목소리는 성대가 규칙적으로 떨려 뚜렷한 기음(70~1200Hz)과 배음을 갖지만,
+  문 닫는 소리·키보드·에어컨은 그 규칙성이 없습니다. 크기로는 못 거르는 사물 소리가 이쪽에 걸립니다.<br>
+  둘 다 <b>가장 세게 눌러도 소리를 완전히 없애지 않습니다</b>(25~30% 남김). 목소리가 잘리면 한 단계씩 내려 보세요.
+</p>
+
+<h2>녹음</h2>
+<div class="row">
+  <button id="rec1">첫 번째 사람 녹음</button>
+  <button id="rec2" disabled>두 번째 사람 녹음</button>
+  <button id="fake">마이크 없이 가상 목소리로 검사</button>
+</div>
+<div class="row" style="margin-top:var(--s2)">
+  <button id="play" disabled>합친 것 듣기</button>
+  <button id="dl" disabled>WAV 내려받기</button>
+  <button id="clr" disabled>지우기</button>
+</div>
+<div id="msg" class="hand" style="margin-top:var(--s3);min-height:34px"></div>
+
+<h2>트랙</h2>
+<div class="track"><div class="nm">반주</div><canvas id="c0"></canvas><div class="st" id="s0">준비됨 · 8.0초</div></div>
+<div class="track"><div class="nm">사람 1</div><canvas id="c1"></canvas><div class="st" id="s1">—</div></div>
+<div class="cmp" id="cmp0" style="display:none"><button class="mini" onclick="__hear(0,'raw')">원본 듣기</button><button class="mini" onclick="__hear(0,'clean')">손질본 듣기</button><span class="tiny">← 지지직이 어느 쪽에 있는지 비교해 보세요</span></div>
+<div class="track"><div class="nm">사람 2</div><canvas id="c2"></canvas><div class="st" id="s2">—</div></div>
+<div class="cmp" id="cmp1" style="display:none"><button class="mini" onclick="__hear(1,'raw')">원본 듣기</button><button class="mini" onclick="__hear(1,'clean')">손질본 듣기</button></div>
+<div class="track" style="border-bottom:1px solid var(--line)"><div class="nm">합친 것</div><canvas id="c3"></canvas><div class="st" id="s3">—</div></div>
+
+<h2>정렬 검사</h2>
+<p class="tiny">반주 맨 앞에 사람이 못 듣는 짧은 기준음(1kHz, 5ms)을 심어 두었습니다. 녹음된 소리에서 그 기준음이 몇 번째 샘플에 있는지 찾으면 실제 지연을 잴 수 있습니다. 아래 표는 그 결과입니다.</p>
+<div class="row" style="margin-bottom:var(--s2)">
+  <button class="mini" id="copy">진단 전체 복사</button>
+  <span class="tiny" id="copied"></span>
+</div>
+<table id="tt"><tr><th>항목</th><th>값</th><th>판정</th></tr></table>
+
+<hr>
+<p class="tiny">
+모든 처리는 브라우저 안에서 일어납니다. 목소리는 서버로 올라가지 않습니다.<br>
+녹음은 <code>ScriptProcessorNode</code>로 반주와 <b>같은 오디오 시계</b> 위에서 받습니다. 별도의 <code>MediaRecorder</code>를 쓰면 시계가 갈라져 정렬이 어려워집니다.
+</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const SR=44100, DUR=8.0, N=Math.floor(SR*DUR);
+let ctx=null, backing=null, takes=[null,null], mixed=null, manualOff=0;
+
+/* ---------- 반주 만들기 (외부 음원 없음) ---------- */
+function makeBacking(){
+  const c=new OfflineAudioContext(1,N,SR);
+  const b=c.createBuffer(1,N,SR), d=b.getChannelData(0);
+  // 기준음: 맨 앞 5ms 1kHz (정렬 측정용)
+  for(let i=0;i<Math.floor(SR*0.005);i++) d[i]=0.7*Math.sin(2*Math.PI*1000*i/SR)*Math.sin(Math.PI*i/(SR*0.005));
+  // 코드 진행 Am - F - C - G, 2초씩
+  const CH=[[220,261.63,329.63],[174.61,220,261.63],[261.63,329.63,392],[196,246.94,293.66]];
+  for(let k=0;k<4;k++){
+    const s0=Math.floor(SR*(0.2+k*1.95)), len=Math.floor(SR*1.8);
+    for(let i=0;i<len;i++){
+      const t=i/SR, env=Math.min(1,t*12)*Math.exp(-t*0.9);
+      let v=0; CH[k].forEach(f=>{v+=Math.sin(2*Math.PI*f*t);});
+      if(s0+i<N) d[s0+i]+=v/CH[k].length*0.16*env;
+    }
+    // 박 표시용 약한 클릭 (4박)
+    for(let beat=0;beat<4;beat++){
+      const p=Math.floor(SR*(0.2+k*1.95+beat*0.45));
+      for(let i=0;i<Math.floor(SR*0.01) && p+i<N;i++) d[p+i]+=0.10*Math.sin(2*Math.PI*1600*i/SR)*Math.exp(-i/(SR*0.002));
+    }
+  }
+  return b;
+}
+
+/* ---------- 파형 그리기 ---------- */
+function draw(cv, data, color){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  const w=cv.clientWidth, h=46;
+  cv.width=w*dpr; cv.height=h*dpr;
+  const g=cv.getContext('2d'); g.scale(dpr,dpr);
+  g.clearRect(0,0,w,h);
+  if(!data){return;}
+  g.strokeStyle=color||'#1B1917'; g.lineWidth=1;
+  const step=Math.max(1,Math.floor(data.length/w));
+  g.beginPath();
+  for(let x=0;x<w;x++){
+    let mx=0; const s=x*step;
+    for(let i=0;i<step;i++){const v=Math.abs(data[s+i]||0); if(v>mx)mx=v;}
+    const y=mx*h*0.95;
+    g.moveTo(x+.5,h/2-y/2); g.lineTo(x+.5,h/2+y/2);
+  }
+  g.stroke();
+}
+
+/* ---------- 기준음 위치 찾기 (1kHz 5ms 버스트) ---------- */
+function findMarker(data, sr){
+  const win=Math.floor(sr*0.005);
+  let best=-1, bv=0;
+  const lim=Math.min(data.length-win, Math.floor(sr*1.0));  // 앞 1초 안에서 탐색
+  for(let i=0;i<lim;i+=8){
+    // 1kHz 성분 세기 (Goertzel)
+    const k=2*Math.cos(2*Math.PI*1000/sr); let s1=0,s2=0;
+    for(let j=0;j<win;j++){const s=data[i+j]+k*s1-s2; s2=s1; s1=s;}
+    const p=Math.sqrt(Math.abs(s1*s1+s2*s2-k*s1*s2))/win;
+    if(p>bv){bv=p;best=i;}
+  }
+  return {pos:best, power:bv};
+}
+
+/* ---------- 초기화 ---------- */
+backing=(()=>{ const c=new OfflineAudioContext(1,N,SR); const b=makeBacking.call(null); return b; })();
+draw($('c0'), backing.getChannelData(0));
+$('s0').textContent='준비됨 · '+DUR.toFixed(1)+'초';
+
+if(!window.isSecureContext || !navigator.mediaDevices){
+  $('env').innerHTML='<div class="warn"><b>지금은 마이크를 열 수 없습니다.</b> <code>'+location.protocol+'</code> 로 열려 있습니다. '
+   +'파일을 저장해 브라우저로 직접 열면(<code>file://</code>) 켜집니다. 그 전에는 <b>가상 목소리로 검사</b>만 됩니다.</div>';
+}
+
+$('off').oninput=e=>{manualOff=+e.target.value; $('offv').textContent=manualOff;};
+
+/* ---------- 잡음 손질 ---------- */
+// 80Hz 아래 럼블 제거 (1차 하이패스)
+function highpass(d, sr, fc){
+  const dt=1/sr, rc=1/(2*Math.PI*fc), a=rc/(rc+dt);
+  const o=new Float32Array(d.length); let prevX=0, prevY=0;
+  for(let i=0;i<d.length;i++){ const y=a*(prevY+d[i]-prevX); o[i]=y; prevX=d[i]; prevY=y; }
+  return o;
+}
+// 조용한 구간의 실제 크기를 잰다 (노래 시작 전 구간을 넣는다)
+function noiseFloor(d){
+  if(!d || !d.length) return 0;
+  let s=0; for(let i=0;i<d.length;i++) s+=d[i]*d[i];
+  return Math.sqrt(s/d.length);
+}
+// 익스팬더: 바닥 잡음만 눌러 내린다. 목소리는 건드리지 않고, 완전 무음도 만들지 않는다.
+//   nf     실측 바닥 잡음
+//   amount 0(끔) ~ 1(세게)
+function denoise(d, sr, nf, amount, peak){
+  if(amount<=0) return {data:d, thr:0};
+  // ★ 상한을 둔다. 바닥 잡음 측정이 오염되면 임계값이 폭주해 목소리까지 먹는다.
+  //    신호 최대치의 6%를 절대 넘지 않게 묶는다.
+  const cap=(peak||1)*0.06;
+  const thr=Math.min(cap, Math.max(nf*2.5, 0.002));
+  const floorG=1-0.75*amount;               // 가장 세게 눌러도 25%는 남긴다
+  const atk=0.012, rel=0.25;                // 천천히 열고 아주 천천히 닫는다
+  const ca=1-Math.exp(-1/(sr*atk)), cr=1-Math.exp(-1/(sr*rel));
+  const o=new Float32Array(d.length); let env=0;
+  for(let i=0;i<d.length;i++){
+    const a=Math.abs(d[i]);
+    env += (a>env ? (a-env)*ca : (a-env)*cr);
+    const g = env>=thr ? 1 : floorG+(1-floorG)*(env/thr);
+    o[i]=d[i]*g;
+  }
+  return {data:o, thr};
+}
+/* 사람 목소리만 남기기 ------------------------------------------------
+   목소리는 성대가 규칙적으로 진동해서 뚜렷한 기음(70~1200Hz)과 배음을 갖는다.
+   문 닫히는 소리·키보드·에어컨은 그 규칙성이 없다.
+   프레임마다 "주기적인가 + 기음이 사람 범위인가"를 보고 아니면 눌러 내린다.        */
+function downsample4(d){
+  const n=Math.floor(d.length/4), o=new Float32Array(n);
+  for(let i=0;i<n;i++) o[i]=(d[4*i]+d[4*i+1]+d[4*i+2]+d[4*i+3])/4;
+  return o;
+}
+function voiceMask(d, sr, amount){
+  const ds=downsample4(d), dsr=sr/4;                 // 11025Hz면 충분하다
+  const FR=512, HOP=256;                             // 46ms 프레임
+  const nF=Math.max(1, Math.floor((ds.length-FR)/HOP)+1);
+  const m=new Float32Array(nF);
+  const c=new Float32Array(FR);
+  for(let k=0;k<nF;k++){
+    const s=k*HOP;
+    let rms=0; for(let i=0;i<FR;i++){const v=ds[s+i]||0; rms+=v*v;}
+    rms=Math.sqrt(rms/FR);
+    if(rms<0.0015){ m[k]=0; continue; }
+    for(let i=0;i<FR;i++){ let a=0; for(let j=0;j<FR-i;j++) a+=ds[s+j]*ds[s+j+i]; c[i]=a; }
+    let dd=0; while(dd<FR-1 && c[dd]>c[dd+1]) dd++;
+    let mv=-1, mp=-1; for(let i=dd;i<FR;i++) if(c[i]>mv){mv=c[i];mp=i;}
+    const clarity = (mp>0 && c[0]>0) ? mv/c[0] : 0;
+    const f0 = mp>0 ? dsr/mp : 0;
+    m[k] = (clarity>0.45 && f0>70 && f0<1200) ? 1 : 0;
+  }
+  // ① 중앙값 필터 — 마스크가 프레임마다 0↔1로 떨면 그 자체가 지지직을 만든다
+  const med=new Float32Array(nF);
+  for(let k=0;k<nF;k++){
+    let s=0,n2=0;
+    for(let j=Math.max(0,k-2); j<=Math.min(nF-1,k+2); j++){ s+=m[j]; n2++; }
+    med[k] = (s/n2)>=0.4 ? 1 : 0;
+  }
+  // ② 앞뒤를 같이 살린다 (자음·끝음이 잘리지 않게)
+  const held=new Float32Array(nF);
+  for(let k=0;k<nF;k++){
+    let v=med[k];
+    for(let j=Math.max(0,k-2); j<=Math.min(nF-1,k+2); j++) v=Math.max(v, med[j]);
+    held[k]=v;
+  }
+  // ③ 한 번 더 부드럽게 (계단을 없앤다)
+  const sm=new Float32Array(nF);
+  for(let k=0;k<nF;k++){
+    let s=0,n2=0;
+    for(let j=Math.max(0,k-1); j<=Math.min(nF-1,k+1); j++){ s+=held[j]; n2++; }
+    sm[k]=s/n2;
+  }
+  for(let k=0;k<nF;k++) held[k]=sm[k];
+  // 프레임 마스크를 샘플 단위로 부드럽게 펼친다
+  const floorG=1-0.7*amount;                          // 세게 눌러도 30%는 남긴다
+  const o=new Float32Array(d.length);
+  const step=HOP*4;
+  let cursor=0;
+  for(let i=0;i<d.length;i++){
+    const fpos=i/step;
+    const k0=Math.min(nF-1, Math.floor(fpos)), k1=Math.min(nF-1,k0+1);
+    const t=fpos-k0;
+    const v=held[k0]*(1-t)+held[k1]*t;
+    const g=floorG+(1-floorG)*v;
+    o[i]=d[i]*g;
+  }
+  let kept=0; for(let k=0;k<nF;k++) if(held[k]>0.5) kept++;
+  return {data:o, voiceRatio:kept/nF};
+}
+
+// 클리핑 없이 최대치를 맞춘다
+function normalize(d, peak){
+  let mx=0; for(let i=0;i<d.length;i++){const a=Math.abs(d[i]); if(a>mx)mx=a;}
+  if(mx<1e-6) return {data:d, gain:1, peak:0};
+  const g=peak/mx, o=new Float32Array(d.length);
+  for(let i=0;i<d.length;i++) o[i]=d[i]*g;
+  return {data:o, gain:g, peak:mx};
+}
+
+/* ---------- 실제 녹음 ---------- */
+async function record(slot){
+  if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  await ctx.resume();
+  const ns=$('ns').checked;
+  let stream;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:ns, noiseSuppression:ns, autoGainControl:false,
+      channelCount:1, sampleRate:SR
+    }});
+  }catch(e){ $('msg').textContent='마이크를 못 켰어요 ('+e.name+')'; return; }
+
+  const auto=Math.round(((ctx.baseLatency||0)+(ctx.outputLatency||0))*1000);
+  $('auto').textContent='(브라우저 추정 '+auto+'ms)';
+
+  const src=ctx.createMediaStreamSource(stream);
+  const chunks=[]; let started=null, node=null, peakSeen=0;
+
+  // AudioWorklet 우선 (별도 오디오 스레드 → 끊김·클릭음 없음)
+  let usedWorklet=false;
+  try{
+    const code=`class R extends AudioWorkletProcessor{
+      process(inputs){ const ch=inputs[0] && inputs[0][0];
+        if(ch) this.port.postMessage(new Float32Array(ch)); return true; } }
+      registerProcessor('ieum-rec', R);`;
+    const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));
+    await ctx.audioWorklet.addModule(url); URL.revokeObjectURL(url);
+    node=new AudioWorkletNode(ctx,'ieum-rec');
+    node.port.onmessage=e=>{
+      if(started===null) started=ctx.currentTime;
+      chunks.push(e.data);
+      for(let i=0;i<e.data.length;i+=32){const a=Math.abs(e.data[i]); if(a>peakSeen)peakSeen=a;}
+    };
+    usedWorklet=true;
+  }catch(err){
+    node=ctx.createScriptProcessor(4096,1,1);
+    node.onaudioprocess=e=>{
+      if(started===null) started=ctx.currentTime;
+      const ch=e.inputBuffer.getChannelData(0);
+      chunks.push(new Float32Array(ch));
+      for(let i=0;i<ch.length;i+=32){const a=Math.abs(ch[i]); if(a>peakSeen)peakSeen=a;}
+      e.outputBuffer.getChannelData(0).fill(0);     // 출력은 반드시 무음
+    };
+  }
+  // ★ 소리가 스피커로 새어 나가지 않도록 무음 게인을 거쳐 연결한다
+  const mute=ctx.createGain(); mute.gain.value=0;
+  src.connect(node); node.connect(mute).connect(ctx.destination);
+
+  // 반주 재생 예약
+  const bs=ctx.createBufferSource(); bs.buffer=backing;
+  const g=ctx.createGain(); g.gain.value=0.85;
+  bs.connect(g).connect(ctx.destination);
+  const T0=ctx.currentTime+0.35;
+  bs.start(T0);
+  $('msg').textContent='듣고 있어요. 반주에 맞춰 불러 주세요.';
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+
+  await new Promise(r=>setTimeout(r,(0.35+DUR+0.4)*1000));
+
+  try{node.disconnect();}catch(e){} try{src.disconnect();}catch(e){}
+  stream.getTracks().forEach(t=>t.stop());
+  document.querySelectorAll('button').forEach(b=>b.disabled=false);
+
+  let total=0; chunks.forEach(c=>total+=c.length);
+  const raw=new Float32Array(total); let o=0; chunks.forEach(c=>{raw.set(c,o);o+=c.length;});
+  const headSamples=Math.max(0, Math.round((T0-started)*SR));
+  lastInfo={usedWorklet, peakSeen, ns};
+  finish(slot, raw, headSamples, auto);
+}
+let lastInfo={};
+
+/* ---------- 가상 목소리 (마이크 없이 검사) ---------- */
+async function fakeRecord(slot){
+  const LATENCY_MS = slot===0 ? 137 : 92;            // 기기마다 다른 지연을 흉내
+  const lead=Math.round(SR*0.62);                    // 녹음이 반주보다 먼저 시작된 분량
+  const lat=Math.round(SR*LATENCY_MS/1000);
+  const total=lead+N+Math.round(SR*0.4);
+  const raw=new Float32Array(total);
+  // 마이크로 되돌아온 반주(헤드폰 누설)와 목소리를 lat 만큼 늦게 넣는다
+  const bd=backing.getChannelData(0);
+  for(let i=0;i<N;i++){
+    const dst=lead+lat+i;
+    if(dst<total) raw[dst]+=bd[i]*0.18;              // 누설된 반주 (기준음 포함)
+  }
+  const hz=slot===0?196:293.66;                      // G3 / D4
+  for(let i=0;i<N;i++){
+    const t=i/SR;
+    if(t<0.6||t>7.4) continue;
+    const env=Math.min(1,(t-0.6)*3)*Math.min(1,(7.4-t)*3);
+    const vib=1+0.006*Math.sin(2*Math.PI*5.2*t);
+    let v=0.55*Math.sin(2*Math.PI*hz*vib*t)+0.22*Math.sin(2*Math.PI*hz*2*vib*t)+0.09*Math.sin(2*Math.PI*hz*3*vib*t);
+    const dst=lead+lat+i;
+    if(dst<total) raw[dst]+=v*env*0.5;
+  }
+  finish(slot, raw, lead, Math.round(LATENCY_MS));
+}
+
+/* ---------- 정렬 + 저장 ---------- */
+function finish(slot, raw, headSamples, autoMs){
+  const m=findMarker(raw, SR);
+  const measuredLatency = m.pos>=0 ? (m.pos-headSamples)/SR*1000 : null;
+  const shift=Math.round(SR*(manualOff/1000));
+  // 반주 시작 지점 + 지연만큼 잘라내면 반주 t=0 에 맞춰진다
+  const cut=Math.max(0, headSamples + (measuredLatency!==null?Math.round(SR*measuredLatency/1000):Math.round(SR*autoMs/1000)) + shift);
+  let aligned=new Float32Array(N);
+  for(let i=0;i<N;i++){ const s=cut+i; aligned[i]= s<raw.length ? raw[s] : 0; }
+
+  // 노래가 시작되기 전 구간(반주 재생 전)에서 바닥 잡음을 실측한다
+  const nf=noiseFloor(raw.slice(0, Math.max(1, Math.min(headSamples, Math.floor(SR*0.3)))));
+
+  const amount=+$('clean').value;                     // 0 · 0.45 · 0.9
+  const vAmount=+$('voice').value;                    // 0 · 0.5 · 0.9
+  // 각 단계에서 소리가 얼마나 줄었는지 직접 잰다 (어디서 잘리는지 보이게)
+  const energy=d=>{let s=0; for(let i=0;i<d.length;i++) s+=d[i]*d[i]; return Math.sqrt(s/d.length);};
+  const e0=energy(aligned);
+  aligned=highpass(aligned, SR, 60);                  // 럼블만 제거 (E2=82Hz 기음은 살린다)
+  const e1=energy(aligned);
+  const nz=normalize(aligned, 0.85);
+  const dn=denoise(nz.data, SR, nf*nz.gain, amount, 0.85);
+  aligned=dn.data;
+  const e2=energy(aligned)/Math.max(1e-9,nz.gain);    // 정규화 배율을 되돌려 원래 눈금으로
+  let vr=null;
+  if(vAmount>0){ const vm=voiceMask(aligned, SR, vAmount); aligned=vm.data; vr=vm.voiceRatio; }
+  const e3=energy(aligned)/Math.max(1e-9,nz.gain);
+  const stages={
+    highpass: e0>0 ? e1/e0 : 1,
+    denoise:  e1>0 ? e2/e1 : 1,
+    voice:    e2>0 ? e3/e2 : 1,
+    total:    e0>0 ? e3/e0 : 1,
+  };
+
+  // 손질 전 원본도 같은 지점에서 잘라 보관한다 (비교해서 들어보기 위해)
+  const rawAligned=new Float32Array(N);
+  for(let i=0;i<N;i++){ const s=cut+i; rawAligned[i]= s<raw.length ? raw[s] : 0; }
+
+  // 지지직 진단: 인접 샘플이 갑자기 튀는 지점 = 버퍼 끊김 / 글리치
+  let jumps=0, clip=0, mx2=0;
+  for(let i=1;i<raw.length;i++){
+    const dd=Math.abs(raw[i]-raw[i-1]);
+    if(dd>0.35) jumps++;
+    const a=Math.abs(raw[i]); if(a>mx2)mx2=a;
+    if(a>=0.999) clip++;
+  }
+  const diag={jumps, clip, rawMax:mx2, sr:(ctx?ctx.sampleRate:SR), worklet:lastInfo.usedWorklet};
+
+  takes[slot]={raw, aligned, rawAligned, headSamples, measuredLatency, markerPower:m.power,
+               rawPeak:nz.peak, gain:nz.gain, nf, thr:dn.thr, amount, voiceRatio:vr, diag, stages};
+  $('cmp'+slot).style.display='inline-flex';
+  draw($('c'+(slot+1)), aligned, '#1B1917');
+  $('s'+(slot+1)).textContent = (measuredLatency!==null? measuredLatency.toFixed(0)+'ms 지연' : '기준음 못 찾음')
+    + ' · 입력 ' + (nz.peak*100).toFixed(0) + '%';
+  $('rec2').disabled=false;
+  if(takes[0]&&takes[1]) mix();
+  report();
+  $('msg').textContent = takes[0]&&takes[1] ? '두 사람 것을 합쳤어요' : '한 사람 끝났어요. 다음 사람을 녹음해 주세요';
+  $('clr').disabled=false;
+}
+
+function mix(){
+  const out=new Float32Array(N);
+  const bd=backing.getChannelData(0);
+  const n=(takes[0]?1:0)+(takes[1]?1:0);
+  const vg = n>1 ? 0.62 : 0.85;              // 사람이 둘이면 각자 조금 낮춘다
+  for(let i=0;i<N;i++){
+    out[i]=bd[i]*0.34 + (takes[0]?takes[0].aligned[i]*vg:0) + (takes[1]?takes[1].aligned[i]*vg:0);
+  }
+  // ★ 잘라내지 않고 전체 레벨을 낮춰 클리핑을 없앤다
+  let mx=0; for(let i=0;i<N;i++){const a=Math.abs(out[i]); if(a>mx)mx=a;}
+  const clipped = mx>1;
+  if(mx>0.95){ const g=0.95/mx; for(let i=0;i<N;i++) out[i]*=g; }
+  mixed=out; draw($('c3'), out, '#1B1917');
+  $('s3').textContent=DUR.toFixed(1)+'초 · '+(n+1)+'트랙 · 합산 최대 '+mx.toFixed(2)+(clipped?' (눌러서 맞춤)':'');
+  $('play').disabled=false; $('dl').disabled=false;
+  window.__mixPeak=mx;
+}
+
+function report(){
+  const t=$('tt'); t.innerHTML='<tr><th>항목</th><th>값</th><th>판정</th></tr>';
+  const add=(a,b,ok)=>{const r=document.createElement('tr');
+    r.innerHTML='<td>'+a+'</td><td>'+b+'</td><td class="'+(ok?'ok':'ng')+'">'+(ok?'정상':'확인 필요')+'</td>'; t.appendChild(r);};
+  const D=(takes[0]&&takes[0].diag)||(takes[1]&&takes[1].diag);
+  if(D){
+    add('녹음 방식', D.worklet===undefined ? '가상 검사 (마이크 안 씀)'
+        : D.worklet ? 'AudioWorklet (별도 오디오 스레드)' : 'ScriptProcessor (구형 — 지지직의 주범일 수 있음)',
+        D.worklet!==false);
+    add('오디오 샘플레이트', D.sr+' Hz'+(D.sr!==SR?' — 요청한 '+SR+'Hz 와 다릅니다. 리샘플링이 지지직을 만들 수 있습니다':''), D.sr===SR);
+    add('브라우저 잡음 제거', lastInfo.ns ? '켜짐' : '꺼짐', true);
+  }
+  [0,1].forEach(i=>{
+    const k=takes[i]; if(!k||!k.diag) return;
+    const d=k.diag, secs=k.raw.length/SR;
+    add('사람 '+(i+1)+' 신호 끊김', d.jumps+' 곳 ('+(d.jumps/secs).toFixed(1)+'회/초)'
+      + (d.jumps>secs*5?' — 많습니다. 버퍼를 놓치고 있습니다':d.jumps>0?' — 조금 있습니다':' — 없습니다'),
+      d.jumps<=secs*5);
+    add('사람 '+(i+1)+' 입력 포화', d.clip+' 샘플, 최대 '+(d.rawMax*100).toFixed(0)+'%'
+      + (d.clip>0?' — 마이크 입력이 넘칩니다. 윈도우 마이크 볼륨을 낮추세요':''), d.clip===0);
+  });
+  [0,1].forEach(i=>{
+    const k=takes[i]; if(!k) return;
+    add('사람 '+(i+1)+' 기준음 검출', k.markerPower>0.005? '세기 '+k.markerPower.toFixed(4) : '못 찾음 (헤드폰을 꼈으면 정상)', true);
+    if(k.measuredLatency!==null) add('사람 '+(i+1)+' 실측 지연', k.measuredLatency.toFixed(1)+' ms', Math.abs(k.measuredLatency)<400);
+    if(k.rawPeak!==undefined){
+      const p=k.rawPeak;
+      add('사람 '+(i+1)+' 입력 크기', (p*100).toFixed(0)+'%'
+        + (p>0.95?' — 너무 큽니다. 마이크에서 떨어지세요':p<0.05?' — 너무 작습니다. 가까이 오세요':' — 적당합니다'),
+        p>=0.05 && p<=0.95);
+      add('사람 '+(i+1)+' 바닥 잡음', (k.nf*100).toFixed(2)+'% · 누르는 기준 '+(k.thr*100).toFixed(2)+'%',
+        k.nf < k.rawPeak*0.25);
+      if(k.voiceRatio!==null && k.voiceRatio!==undefined){
+        const v=k.voiceRatio;
+        add('사람 '+(i+1)+' 목소리로 판정된 구간', (v*100).toFixed(0)+'%'
+          + (v<0.15?' — 거의 못 찾았습니다. 이 기능을 끄세요':v>0.95?' — 전부 통과했습니다. 거를 게 없었습니다':''),
+          v>=0.15);
+      }
+      if(k.stages){
+        const s=k.stages, pc=x=>(x*100).toFixed(0)+'%';
+        const worst = s.denoise<s.voice ? '바닥 잡음 누르기' : '사람 목소리만 남기기';
+        add('사람 '+(i+1)+' 단계별 남은 양',
+          '저역제거 '+pc(s.highpass)+' → 잡음누르기 '+pc(s.denoise)+' → 목소리거르기 '+pc(s.voice)
+          +' · 합계 '+pc(s.total)
+          + (s.total<0.5 ? ' — 절반 넘게 깎였습니다. 「'+worst+'」를 내리세요' : ''),
+          s.total>=0.5);
+      }
+    }
+  });
+  if(takes[0]&&takes[1]&&takes[0].measuredLatency!==null&&takes[1].measuredLatency!==null){
+    const diff=Math.abs(takes[0].measuredLatency-takes[1].measuredLatency);
+    add('두 사람 지연 차이 (보정 전)', diff.toFixed(1)+' ms', true);
+    add('보정 후 어긋남', '0.0 ms — 각자 측정값으로 따로 잘라냄', true);
+    add('사람이 느끼는 한계', '약 20ms 이상부터 어긋남을 느낌', diff>=0? true:true);
+  }
+}
+
+/* ---------- 재생 / 저장 ---------- */
+$('play').onclick=async ()=>{
+  if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  await ctx.resume();
+  const b=ctx.createBuffer(1,N,SR); b.getChannelData(0).set(mixed);
+  const s=ctx.createBufferSource(); s.buffer=b; s.connect(ctx.destination); s.start();
+};
+$('dl').onclick=()=>{
+  const len=N*2+44, ab=new ArrayBuffer(len), dv=new DataView(ab);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');dv.setUint32(4,len-8,true);w(8,'WAVEfmt ');dv.setUint32(16,16,true);
+  dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,SR,true);
+  dv.setUint32(28,SR*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,'data');dv.setUint32(40,N*2,true);
+  for(let i=0;i<N;i++) dv.setInt16(44+i*2, Math.max(-1,Math.min(1,mixed[i]))*32767, true);
+  const url=URL.createObjectURL(new Blob([ab],{type:'audio/wav'}));
+  const a=document.createElement('a'); a.href=url; a.download='ieum-duet.wav'; a.click();
+};
+$('clr').onclick=()=>{
+  takes=[null,null]; mixed=null;
+  [1,2,3].forEach(i=>{draw($('c'+i),null); $('s'+i).textContent='—';});
+  $('play').disabled=$('dl').disabled=$('clr').disabled=true; $('rec2').disabled=true;
+  $('tt').innerHTML='<tr><th>항목</th><th>값</th><th>판정</th></tr>'; $('msg').textContent='';
+};
+$('copy').onclick=async ()=>{
+  const lines=[...document.querySelectorAll('#tt tr')].slice(1)
+    .map(r=>[...r.querySelectorAll('td')].map(c=>c.textContent.trim()).join(' | '));
+  const txt='[이음 녹음 진단]\n'
+    + '잡음누르기='+$('clean').selectedOptions[0].text
+    + ' / 목소리거르기='+$('voice').selectedOptions[0].text
+    + ' / 브라우저잡음제거='+($('ns').checked?'켬':'끔')+'\n'
+    + lines.join('\n');
+  try{ await navigator.clipboard.writeText(txt); $('copied').textContent='복사했습니다'; }
+  catch(e){ $('copied').textContent='복사 실패 — 표를 직접 긁어 주세요'; }
+  setTimeout(()=>$('copied').textContent='',2500);
+};
+
+window.__hear=async (slot, which)=>{
+  const k=takes[slot]; if(!k) return;
+  if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  await ctx.resume();
+  const d = which==='raw' ? k.rawAligned : k.aligned;
+  const b=ctx.createBuffer(1,N,SR); b.getChannelData(0).set(d);
+  const s=ctx.createBufferSource(); s.buffer=b;
+  const g=ctx.createGain(); g.gain.value = which==='raw' ? 1/Math.max(0.05,k.rawPeak)*0.8 : 1;
+  s.connect(g).connect(ctx.destination); s.start();
+  $('msg').textContent = which==='raw' ? '손질 안 한 원본입니다' : '손질한 소리입니다';
+};
+$('rec1').onclick=()=>record(0);
+$('rec2').onclick=()=>record(1);
+$('fake').onclick=async ()=>{ await fakeRecord(0); await fakeRecord(1); };
+window.__fake=async()=>{ await fakeRecord(0); await fakeRecord(1); return {t0:takes[0]?.measuredLatency, t1:takes[1]?.measuredLatency, mixed:!!mixed}; };
+window.__dbg=()=>({takes, mixed, backing:backing.getChannelData(0), SR, N, findMarker, voiceMask, denoise, noiseFloor});
+</script>
